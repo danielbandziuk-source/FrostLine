@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FrostLine — Зимняя Рыбалка</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#050d1a;overflow:hidden;font-family:'Segoe UI',sans-serif;color:#fff}
+canvas{display:block;position:fixed;inset:0;width:100%;height:100%;z-index:0}
+
+#scr-load{position:fixed;inset:0;z-index:9000;background:linear-gradient(135deg,#020a18,#050f22);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.l-title{font-size:44px;font-weight:900;letter-spacing:4px;
+  background:linear-gradient(135deg,#fff,#7dd3fc,#38bdf8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.l-sub{font-size:11px;color:#334155;letter-spacing:4px;text-transform:uppercase}
+.l-step{font-size:12px;color:#38bdf8;min-height:16px;text-align:center}
+.l-bar{width:260px;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.l-fill{height:100%;background:linear-gradient(90deg,#0ea5e9,#7dd3fc);border-radius:2px;width:0%;transition:width .25s}
+
+#scr-menu{position:fixed;inset:0;z-index:8000;display:none;flex-direction:column;
+  align-items:center;justify-content:center}
+#menu-bg{position:absolute;inset:0;background:url('background.jpg') center/cover no-repeat;
+  filter:brightness(.3) saturate(.7)}
+#menu-bg::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(0,5,15,.55) 0%,rgba(0,10,25,.15) 50%,rgba(0,5,15,.95) 100%)}
+#menu-snow{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.msf{position:absolute;top:-20px;color:rgba(255,255,255,.4);animation:snowfall linear infinite}
+@keyframes snowfall{0%{transform:translateY(-20px) rotate(0deg);opacity:0}
+  10%{opacity:.6}90%{opacity:.3}100%{transform:translateY(105vh) rotate(360deg);opacity:0}}
+.m-logo{position:relative;z-index:1;text-align:center;margin-bottom:30px}
+.m-title{font-size:54px;font-weight:900;letter-spacing:5px;
+  background:linear-gradient(135deg,#fff 0%,#7dd3fc 45%,#0ea5e9 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 20px rgba(56,189,248,.3))}
+.m-sub{font-size:11px;color:rgba(125,211,252,.6);letter-spacing:7px;text-transform:uppercase;margin-top:4px}
+.m-ver{font-size:10px;color:rgba(255,255,255,.18);margin-top:3px;letter-spacing:2px}
+.m-btns{position:relative;z-index:1;display:flex;flex-direction:column;gap:8px;width:275px}
+.mbtn{width:100%;padding:13px 22px;border-radius:12px;font-size:14px;font-weight:700;
+  cursor:pointer;border:none;transition:all .2s;letter-spacing:.2px}
+.mbtn:hover{transform:translateY(-2px)}
+.mbtn:active{transform:scale(.98)}
+.mbtn-p{background:linear-gradient(135deg,#0369a1,#0ea5e9);color:#fff;
+  box-shadow:0 5px 22px rgba(14,165,233,.38)}
+.mbtn-p:hover{box-shadow:0 8px 30px rgba(14,165,233,.55)}
+.mbtn-s{background:rgba(255,255,255,.07);color:#e2e8f0;
+  border:1px solid rgba(255,255,255,.13);backdrop-filter:blur(8px)}
+.mbtn-s:hover{background:rgba(255,255,255,.12)}
+.mbtn-d{background:rgba(220,38,38,.1);color:#fca5a5;border:1px solid rgba(220,38,38,.2)}
+.mbtn-d:hover{background:rgba(220,38,38,.2)}
+.m-stats{position:relative;z-index:1;margin-top:14px;
+  background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.09);
+  border-radius:11px;padding:9px 18px;backdrop-filter:blur(8px);display:none}
+.msr{display:flex;gap:18px}
+.msi{display:flex;flex-direction:column;align-items:center;gap:1px}
+.msv{color:#7dd3fc;font-weight:700;font-size:13px}
+.msl{color:rgba(255,255,255,.3);font-size:9px;text-transform:uppercase;letter-spacing:.5px}
+.m-footer{position:absolute;bottom:14px;z-index:1;color:rgba(255,255,255,.15);font-size:10px;letter-spacing:1px}
+
+#scr-sett{position:fixed;inset:0;z-index:8500;display:none;align-items:center;justify-content:center}
+.sb{position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(7px);cursor:pointer}
+.sbox{position:relative;z-index:1;background:linear-gradient(135deg,rgba(4,12,26,.98),rgba(7,18,38,.98));
+  border:1px solid rgba(125,211,252,.16);border-radius:18px;padding:24px;
+  width:480px;max-height:84vh;overflow-y:auto;box-shadow:0 26px 65px rgba(0,0,0,.8);
+  animation:popIn .32s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{from{transform:scale(.88) translateY(14px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.sbox h2{text-align:center;color:#7dd3fc;font-size:17px;font-weight:800;margin-bottom:16px}
+.scls{position:absolute;top:13px;right:13px;width:28px;height:28px;border-radius:7px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
+  color:#94a3b8;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:14px;transition:all .2s}
+.scls:hover{background:rgba(239,68,68,.2);color:#fca5a5}
+.stabs{display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap}
+.stab{padding:5px 12px;border-radius:7px;border:1px solid rgba(255,255,255,.09);
+  background:rgba(255,255,255,.04);color:#64748b;cursor:pointer;font-size:12px;transition:all .2s}
+.stab.on{background:rgba(56,189,248,.14);border-color:rgba(56,189,248,.38);color:#38bdf8;font-weight:600}
+.stab-c{display:none}.stab-c.on{display:block}
+.srow{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:8px;padding:8px 12px;background:rgba(255,255,255,.03);
+  border-radius:8px;border:1px solid rgba(255,255,255,.05)}
+.srow:hover{background:rgba(255,255,255,.055)}
+.slbl{display:flex;flex-direction:column;gap:2px}
+.slbl span{font-size:13px;color:#e2e8f0}
+.slbl small{font-size:10px;color:#475569}
+.sctl{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.tog{width:40px;height:21px;border-radius:11px;background:#1e3a50;
+  border:1px solid rgba(255,255,255,.09);cursor:pointer;position:relative;transition:background .3s}
+.tog.on{background:linear-gradient(135deg,#0369a1,#0ea5e9)}
+.tog::after{content:'';position:absolute;top:3px;left:3px;width:13px;height:13px;
+  border-radius:50%;background:#fff;transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.tog.on::after{transform:translateX(19px)}
+.sr{-webkit-appearance:none;width:105px;height:3px;border-radius:2px;
+  background:rgba(255,255,255,.1);outline:none;cursor:pointer}
+.sr::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;
+  border-radius:50%;background:linear-gradient(135deg,#0ea5e9,#38bdf8);cursor:pointer}
+.srv{min-width:32px;text-align:right;font-size:12px;color:#7dd3fc;font-weight:700}
+.ssel{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);
+  border-radius:7px;color:#e2e8f0;padding:4px 8px;font-size:12px;cursor:pointer;outline:none}
+.ssel option{background:#0a1628;color:#e2e8f0}
+.sbtn{padding:5px 13px;border-radius:7px;border:1px solid rgba(255,255,255,.13);
+  background:rgba(255,255,255,.07);color:#e2e8f0;font-size:12px;cursor:pointer;transition:all .2s}
+.sbtn:hover{background:rgba(255,255,255,.13)}
+.sbtn.red{border-color:rgba(239,68,68,.25);color:#fca5a5;background:rgba(239,68,68,.06)}
+.sbtn.red:hover{background:rgba(239,68,68,.16)}
+.kbind{display:inline-block;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
+  border-radius:5px;padding:2px 8px;font-size:11px;color:#7dd3fc;font-weight:700;font-family:monospace}
+.sf{display:flex;gap:7px;margin-top:13px}
+.sf .sbtn{flex:1}
+.sf .sbtn.bl{background:rgba(14,165,233,.13);border-color:rgba(14,165,233,.28);color:#7dd3fc}
+.sf .sbtn.bl:hover{background:rgba(14,165,233,.22)}
+
+#scr-pause{position:fixed;inset:0;z-index:7500;display:none;align-items:center;justify-content:center}
+.pb{position:absolute;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(10px)}
+.pbox{position:relative;z-index:1;background:linear-gradient(135deg,rgba(4,12,26,.98),rgba(7,18,38,.98));
+  border:1px solid rgba(125,211,252,.16);border-radius:17px;padding:28px;
+  width:290px;text-align:center;box-shadow:0 26px 65px rgba(0,0,0,.8);
+  animation:popIn .32s cubic-bezier(.34,1.56,.64,1)}
+.pbox h2{color:#7dd3fc;font-size:19px;font-weight:800;margin-bottom:3px}
+.pbox p{color:#475569;font-size:12px;margin-bottom:20px}
+.pbox .mbtn{margin-bottom:7px}
+
+#hud{position:fixed;inset:0;pointer-events:none;z-index:10;display:none}
+#timebar{position:fixed;top:13px;left:50%;transform:translateX(-50%);
+  background:rgba(4,12,26,.88);border:1px solid rgba(125,211,252,.16);
+  border-radius:20px;padding:6px 18px;font-size:13px;
+  display:flex;align-items:center;gap:11px;backdrop-filter:blur(12px)}
+.tbsep{width:1px;height:12px;background:rgba(255,255,255,.1)}
+#tb-dn{width:86px;height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+#tb-dnf{height:100%;border-radius:2px;transition:width .5s,background .5s}
+#statpanel{position:fixed;top:13px;left:13px;
+  background:rgba(4,12,26,.88);border:1px solid rgba(125,211,252,.13);
+  border-radius:12px;padding:10px 14px;font-size:12px;backdrop-filter:blur(12px);min-width:150px}
+.spt{color:#7dd3fc;font-size:13px;font-weight:700;margin-bottom:6px}
+.spr{display:flex;justify-content:space-between;gap:9px;margin:2px 0;
+  padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.spr:last-child{border:none}
+.spv{color:#7dd3fc;font-weight:700}
+.spv.g{color:#86efac}.spv.y{color:#fbbf24}
+#catchpanel{position:fixed;top:13px;right:13px;
+  background:rgba(4,12,26,.88);border:1px solid rgba(134,239,172,.13);
+  border-radius:12px;padding:10px 14px;font-size:12px;
+  backdrop-filter:blur(12px);max-width:170px;max-height:290px;overflow:hidden}
+#catchpanel h4{color:#86efac;font-size:13px;font-weight:700;margin-bottom:6px}
+.ci{display:flex;justify-content:space-between;gap:4px;
+  margin:2px 0;padding:2px 5px;background:rgba(134,239,172,.04);
+  border-radius:4px;font-size:11px;color:#d1fae5}
+#money-panel{position:fixed;top:13px;left:50%;transform:translateX(170px);
+  background:rgba(4,12,26,.88);border:1px solid rgba(251,191,36,.2);
+  border-radius:12px;padding:7px 15px;backdrop-filter:blur(12px);
+  display:flex;align-items:center;gap:7px;pointer-events:none}
+#money-val{color:#fbbf24;font-weight:700;font-size:14px}
+
+#xhair{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:18px;height:18px;pointer-events:none;display:none}
+#xhair::before,#xhair::after{content:'';position:absolute;background:rgba(255,255,255,.8)}
+#xhair::before{width:2px;height:100%;left:50%;transform:translateX(-50%)}
+#xhair::after{height:2px;width:100%;top:50%;transform:translateY(-50%)}
+
+#botbar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
+  display:none;gap:6px;align-items:flex-end;z-index:10}
+.abtn{background:rgba(4,12,26,.88);border:1px solid rgba(255,255,255,.11);
+  border-radius:10px;padding:8px 13px;color:#fff;font-size:12px;cursor:pointer;
+  pointer-events:all;transition:all .2s;backdrop-filter:blur(10px);
+  display:flex;flex-direction:column;align-items:center;gap:2px;min-width:64px;user-select:none}
+.abtn:hover{transform:translateY(-2px);background:rgba(255,255,255,.09)}
+.abtn .al{font-size:10px;color:#94a3b8}
+.abtn .ak{font-size:9px;color:#475569}
+.abtn.on{border-color:#38bdf8;background:rgba(56,189,248,.13)}
+
+#fishui{position:fixed;bottom:82px;left:50%;transform:translateX(-50%);
+  display:none;z-index:50;pointer-events:none;min-width:260px;text-align:center}
+#fishstatus{font-size:13px;color:#94a3b8;background:rgba(4,12,26,.82);
+  padding:5px 13px;border-radius:7px;backdrop-filter:blur(7px);
+  display:inline-block;width:100%;margin-bottom:6px}
+#bitewrap{background:rgba(4,12,26,.92);border:1px solid rgba(56,189,248,.25);
+  border-radius:12px;padding:11px 14px;backdrop-filter:blur(10px);display:none}
+#bitetitle{color:#7dd3fc;font-size:14px;font-weight:700;text-align:center;margin-bottom:9px}
+#ptrack{width:100%;height:16px;background:rgba(0,0,0,.4);border-radius:8px;
+  border:1px solid rgba(255,255,255,.09);overflow:hidden;position:relative}
+#pfill{height:100%;width:0%;border-radius:8px;
+  background:linear-gradient(90deg,#22c55e,#86efac,#fbbf24,#f97316,#ef4444)}
+#pzone{position:absolute;top:0;height:100%;background:rgba(134,239,172,.2);
+  border-left:2px solid rgba(134,239,172,.5);border-right:2px solid rgba(134,239,172,.5)}
+#pmark{position:absolute;top:0;width:3px;height:100%;background:#fff;
+  border-radius:2px;transform:translateX(-50%);box-shadow:0 0 5px rgba(255,255,255,.8)}
+.pl{font-size:10px;color:#64748b;margin-bottom:3px;display:flex;justify-content:space-between}
+#phint{font-size:11px;color:#64748b;text-align:center;margin-top:5px}
+
+#drillui{position:fixed;bottom:82px;left:50%;transform:translateX(-50%);
+  display:none;z-index:50;background:rgba(4,12,26,.92);
+  border:1px solid rgba(96,165,250,.25);border-radius:12px;
+  padding:12px 17px;min-width:220px;backdrop-filter:blur(10px);text-align:center}
+#drillui h4{color:#60a5fa;font-size:13px;font-weight:700;margin-bottom:8px}
+#dtrack{width:100%;height:12px;background:rgba(0,0,0,.4);border-radius:6px;
+  border:1px solid rgba(255,255,255,.09);overflow:hidden;margin-bottom:5px}
+#dfill{height:100%;width:0%;background:linear-gradient(90deg,#1d4ed8,#60a5fa);border-radius:6px}
+#dlabel{font-size:10px;color:#64748b}
+
+#catchpop{position:fixed;top:34%;left:50%;
+  transform:translate(-50%,-50%) scale(0);opacity:0;
+  background:linear-gradient(135deg,rgba(4,18,8,.97),rgba(8,26,12,.97));
+  border:1px solid rgba(34,197,94,.4);border-radius:16px;
+  padding:20px 30px;text-align:center;z-index:200;
+  backdrop-filter:blur(10px);pointer-events:none;min-width:200px;
+  transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .25s}
+#catchpop.show{transform:translate(-50%,-50%) scale(1);opacity:1}
+#catchpop.hide{transform:translate(-50%,-50%) scale(.8);opacity:0}
+#cpname{font-size:19px;font-weight:800;color:#86efac;margin-bottom:3px}
+#cpwt{font-size:13px;color:#6ee7b7}
+#cprec{font-size:11px;color:#fbbf24;margin-top:4px;font-weight:700;display:none}
+#cpmoney{font-size:12px;color:#94a3b8;margin-top:4px}
+
+#prompt{position:fixed;bottom:104px;left:50%;transform:translateX(-50%);
+  background:rgba(4,12,26,.86);border:1px solid rgba(255,255,255,.11);
+  border-radius:8px;padding:5px 13px;color:#e2e8f0;font-size:12px;
+  display:none;pointer-events:none;backdrop-filter:blur(7px);white-space:nowrap}
+.pk{display:inline-block;background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.18);border-radius:4px;
+  padding:1px 5px;font-size:10px;font-weight:700;margin:0 2px}
+
+#minimap{position:fixed;bottom:82px;right:13px;width:104px;height:104px;
+  background:rgba(4,12,26,.86);border:1px solid rgba(125,211,252,.16);
+  border-radius:10px;overflow:hidden;backdrop-filter:blur(7px);display:none;z-index:10}
+#mmcanvas{width:100%;height:100%}
+
+#invbg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(5px);
+  display:none;z-index:90;pointer-events:all}
+#invbox{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:linear-gradient(135deg,rgba(4,12,26,.98),rgba(8,18,38,.98));
+  border:1px solid rgba(125,211,252,.16);border-radius:17px;padding:20px;
+  width:640px;max-height:80vh;overflow-y:auto;z-index:100;
+  backdrop-filter:blur(16px);pointer-events:all;display:none;
+  box-shadow:0 20px 65px rgba(0,0,0,.8)}
+#invbox h2{text-align:center;margin-bottom:14px;color:#7dd3fc;font-size:17px;font-weight:700}
+.itabs{display:flex;gap:5px;margin-bottom:13px;flex-wrap:wrap}
+.itab{padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.09);
+  background:rgba(255,255,255,.04);color:#64748b;cursor:pointer;font-size:12px;transition:all .2s}
+.itab.on{background:rgba(125,211,252,.13);border-color:rgba(125,211,252,.35);color:#7dd3fc;font-weight:600}
+.igrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.icard{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;padding:10px 8px;cursor:pointer;transition:all .2s;
+  text-align:center;position:relative}
+.icard:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);transform:translateY(-1px)}
+.icard.sel{border-color:#38bdf8;background:rgba(56,189,248,.08)}
+.icard.eqp{border-color:#fbbf24;background:rgba(251,191,36,.06)}
+.ico{font-size:20px;margin-bottom:5px;display:block;font-family:monospace;color:#7dd3fc;font-weight:700}
+.inm{font-size:11px;color:#e2e8f0;font-weight:600}
+.ids{font-size:10px;color:#475569;margin-top:2px}
+.ist{font-size:10px;color:#38bdf8;margin-top:2px}
+.iclose{margin-top:11px;text-align:center}
+.iclose button{padding:6px 18px;border-radius:7px;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.13);color:#94a3b8;cursor:pointer;font-size:12px}
+
+#asmbg{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);
+  display:none;z-index:90;pointer-events:all}
+#asmbox{position:fixed;background:linear-gradient(135deg,rgba(4,12,26,.98),rgba(8,16,32,.98));
+  border:1px solid rgba(251,191,36,.2);border-radius:17px;padding:20px;
+  color:#fff;width:480px;z-index:100;backdrop-filter:blur(16px);pointer-events:all;
+  box-shadow:0 20px 65px rgba(0,0,0,.8);display:none;
+  top:50%;left:50%;transform:translate(-50%,-50%)}
+.drag-handle{cursor:move;user-select:none;margin-bottom:14px;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+.drag-handle h3{color:#fbbf24;font-size:15px;font-weight:700;margin:0}
+.dd{display:flex;flex-direction:column;gap:3px;opacity:.35}
+.dd span{display:flex;gap:3px}
+.dd i{width:3px;height:3px;background:#94a3b8;border-radius:50%;display:block}
+.aflow{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:center;margin-bottom:13px}
+.aslot{width:74px;height:74px;border:2px dashed rgba(255,255,255,.13);
+  border-radius:12px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;cursor:pointer;transition:all .2s;position:relative;
+  background:rgba(255,255,255,.02)}
+.aslot:hover{border-color:rgba(251,191,36,.38);background:rgba(251,191,36,.04)}
+.aslot.filled{border-color:rgba(134,239,172,.42);background:rgba(134,239,172,.05);border-style:solid}
+.aslot.picking{border-color:rgba(56,189,248,.55);border-style:solid;
+  animation:glowSlot .8s ease-in-out infinite alternate}
+@keyframes glowSlot{from{box-shadow:none}to{box-shadow:0 0 12px rgba(56,189,248,.38)}}
+.asi{font-size:18px;margin-bottom:2px;font-family:monospace;color:#7dd3fc;font-weight:700}
+.asn{font-size:9px;color:#64748b;text-align:center}
+.asv{font-size:9px;color:#86efac;text-align:center;font-weight:600;margin-top:1px}
+.asx{position:absolute;top:-5px;right:-5px;width:14px;height:14px;
+  background:#ef4444;border-radius:50%;font-size:8px;display:flex;align-items:center;
+  justify-content:center;opacity:0;transition:opacity .2s;cursor:pointer}
+.aslot.filled:hover .asx{opacity:1}
+.aplus{color:#334155;font-size:17px;flex-shrink:0}
+#aprev{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+  border-radius:8px;padding:8px 12px;margin-bottom:12px;min-height:40px;font-size:11px}
+.apt{color:#64748b;margin-bottom:3px}
+.aps{display:flex;flex-wrap:wrap;gap:7px}
+.apst{color:#7dd3fc;font-size:11px}
+#asmbtn{width:100%;padding:10px;border-radius:10px;
+  background:linear-gradient(135deg,#166534,#16a34a);border:none;
+  color:#fff;cursor:pointer;font-size:13px;font-weight:700;transition:all .2s}
+#asmbtn:hover:not(:disabled){background:linear-gradient(135deg,#15803d,#22c55e);transform:translateY(-1px)}
+#asmbtn:disabled{background:rgba(28,38,54,.8);color:#334155;cursor:not-allowed}
+.asmc{margin-top:6px;text-align:center;font-size:10px;color:#334155}
+.asmcls{width:100%;margin-top:6px;padding:6px;border-radius:8px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);
+  color:#475569;cursor:pointer;font-size:11px}
+
+#shopbg{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);
+  display:none;z-index:90;pointer-events:all}
+#shopbox{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:linear-gradient(135deg,rgba(4,12,26,.98),rgba(8,18,38,.98));
+  border:1px solid rgba(251,191,36,.2);border-radius:17px;padding:20px;
+  width:660px;max-height:82vh;overflow-y:auto;z-index:100;
+  backdrop-filter:blur(16px);pointer-events:all;display:none;
+  box-shadow:0 20px 65px rgba(0,0,0,.8)}
+#shopbox h2{text-align:center;margin-bottom:5px;color:#fbbf24;font-size:17px;font-weight:700}
+.shop-bal{text-align:center;font-size:12px;color:#94a3b8;margin-bottom:14px}
+.shop-bal span{color:#fbbf24;font-weight:700}
+.shop-tabs{display:flex;gap:5px;margin-bottom:13px;flex-wrap:wrap}
+.shop-tab{padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.09);
+  background:rgba(255,255,255,.04);color:#64748b;cursor:pointer;font-size:12px;transition:all .2s}
+.shop-tab.on{background:rgba(251,191,36,.14);border-color:rgba(251,191,36,.36);color:#fbbf24;font-weight:600}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.scard{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;padding:12px 10px;text-align:center;transition:all .2s}
+.scard:hover{background:rgba(255,255,255,.08)}
+.scard.owned{border-color:rgba(134,239,172,.35);background:rgba(134,239,172,.04)}
+.sico{font-size:22px;margin-bottom:5px;display:block;font-family:monospace;color:#7dd3fc;font-weight:700}
+.snm{font-size:12px;color:#e2e8f0;font-weight:600}
+.sds{font-size:10px;color:#475569;margin-top:2px}
+.sst{font-size:10px;color:#38bdf8;margin-top:2px}
+.sprice{font-size:13px;color:#fbbf24;font-weight:700;margin-top:6px}
+.sbuy{width:100%;margin-top:7px;padding:6px;border-radius:7px;
+  background:linear-gradient(135deg,#92400e,#b45309);border:none;
+  color:#fff;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s}
+.sbuy:hover:not(:disabled){background:linear-gradient(135deg,#b45309,#d97706);transform:translateY(-1px)}
+.sbuy:disabled{background:rgba(28,38,54,.8);color:#334155;cursor:not-allowed}
+.sown{font-size:11px;color:#86efac;margin-top:6px;font-weight:600}
+.sclose-btn{margin-top:14px;width:100%;padding:8px;border-radius:8px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+  color:#94a3b8;cursor:pointer;font-size:12px}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(125,211,252,.18);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div id="scr-load">
+  <div class="l-title">FrostLine</div>
+  <div class="l-sub">Зимняя Рыбалка</div>
+  <div class="l-step" id="lstep">Загрузка...</div>
+  <div class="l-bar"><div class="l-fill" id="lfill"></div></div>
+</div>
+
+<div id="scr-menu">
+  <div id="menu-bg"></div>
+  <div id="menu-snow"></div>
+  <div class="m-logo">
+    <div class="m-title">FrostLine</div>
+    <div class="m-sub">Зимняя Рыбалка</div>
+    <div class="m-ver">v2.0</div>
+  </div>
+  <div class="m-btns">
+    <button class="mbtn mbtn-p" onclick="startNew()">Новая игра</button>
+    <button class="mbtn mbtn-p" id="btn-cont" style="display:none" onclick="continueG()">Продолжить</button>
+    <button class="mbtn mbtn-s" onclick="openSett(false)">Настройки</button>
+    <button class="mbtn mbtn-s" onclick="openControls()">Управление</button>
+    <button class="mbtn mbtn-d" id="btn-reset" style="display:none" onclick="doReset()">Сбросить прогресс</button>
+  </div>
+  <div class="m-stats" id="m-stats">
+    <div class="msr">
+      <div class="msi"><span class="msv" id="ms-f">0</span><span class="msl">Поймано</span></div>
+      <div class="msi"><span class="msv" id="ms-w">0кг</span><span class="msl">Вес</span></div>
+      <div class="msi"><span class="msv" id="ms-m">0</span><span class="msl">Монет</span></div>
+    </div>
+  </div>
+  <div class="m-footer">FrostLine 2025</div>
+</div>
+
+<div id="scr-sett">
+  <div class="sb" onclick="closeSett()"></div>
+  <div class="sbox">
+    <button class="scls" onclick="closeSett()">x</button>
+    <h2>Настройки</h2>
+    <div class="stabs">
+      <div class="stab on" onclick="switchStab(this,'sg')">Графика</div>
+      <div class="stab" onclick="switchStab(this,'sa')">Звук</div>
+      <div class="stab" onclick="switchStab(this,'sp')">Игра</div>
+      <div class="stab" onclick="switchStab(this,'sk')">Управление</div>
+    </div>
+    <div class="stab-c on" id="sg">
+      <div class="srow"><div class="slbl"><span>Тени</span><small>Мягкие тени</small></div>
+        <div class="sctl"><div class="tog on" id="t-sh" onclick="togS(this,'shadows')"></div></div></div>
+      <div class="srow"><div class="slbl"><span>Снег и метель</span></div>
+        <div class="sctl"><div class="tog on" id="t-sn" onclick="togS(this,'snow')"></div></div></div>
+      <div class="srow"><div class="slbl"><span>Туман</span></div>
+        <div class="sctl"><div class="tog on" id="t-fg" onclick="togS(this,'fog')"></div></div></div>
+      <div class="srow"><div class="slbl"><span>Отражения льда</span></div>
+        <div class="sctl"><div class="tog on" id="t-rf" onclick="togS(this,'refl')"></div></div></div>
+      <div class="srow"><div class="slbl"><span>Звёзды</span></div>
+        <div class="sctl"><div class="tog on" id="t-st" onclick="togS(this,'stars')"></div></div></div>
+      <div class="srow"><div class="slbl"><span>Чувствительность мыши</span></div>
+        <div class="sctl"><input type="range" class="sr" id="r-ms" min="5" max="30" value="18"
+          oninput="rngS('mouseSens',this.value);this.nextElementSibling.textContent=this.value">
+          <span class="srv">18</span></div></div>
+      <div class="srow"><div class="slbl"><span>Угол обзора (FOV)</span></div>
+        <div class="sctl"><input type="range" class="sr" id="r-fv" min="60" max="110" value="72"
+          oninput="rngS('fov',this.value);this.nextElementSibling.textContent=this.value">
+          <span class="srv">72</span></div></div>
+    </div>
+    <div class="stab-c" id="sa">
+      <div class="srow"><div class="slbl"><span>Звук включён</span></div>
+        <div class="sctl"><div class="tog on" id="t-so" onclick="togS(this,'sound')"></div></div></div>
+      <div class="srow"><div class="slbl"><span>Громкость</span></div>
+        <div class="sctl"><input type="range" class="sr" id="r-vl" min="0" max="100" value="70"
+          oninput="rngS('volume',this.value);this.nextElementSibling.textContent=this.value+'%'">
+          <span class="srv">70%</span></div></div>
+    </div>
+    <div class="stab-c" id="sp">
+      <div class="srow"><div class="slbl"><span>Скорость времени</span><small>1 сек = X игр. минут</small></div>
+        <div class="sctl"><select class="ssel" id="s-ts" onchange="rngS('timeSpeed',this.value)">
+          <option value="0.5">x0.5 Медленно</option>
+          <option value="1" selected>x1 Реальное</option>
+          <option value="2">x2 Быстро</option>
+          <option value="5">x5 Очень быстро</option>
+        </select></div></div>
+      <div class="srow"><div class="slbl"><span>Сложность</span></div>
+        <div class="sctl"><select class="ssel" id="s-df" onchange="SETS.difficulty=this.value;saveS()">
+          <option value="easy">Лёгкая</option>
+          <option value="normal" selected>Нормальная</option>
+          <option value="hard">Сложная</option>
+        </select></div></div>
+      <div class="srow"><div class="slbl"><span>Автосохранение</span></div>
+        <div class="sctl"><div class="tog on" id="t-as" onclick="togS(this,'autosave')"></div></div></div>
+      <div class="srow"><div class="slbl"><span>Восстановление рыбы</span></div>
+        <div class="sctl"><div class="tog on" id="t-rg" onclick="togS(this,'regen')"></div></div></div>
+      <div class="srow"><div class="slbl"><span>Миникарта</span></div>
+        <div class="sctl"><div class="tog on" id="t-mm" onclick="togS(this,'minimap')"></div></div></div>
+      <div class="srow"><div class="slbl"><span>Данные</span><small id="sinfo">Нет данных</small></div>
+        <div class="sctl" style="gap:5px">
+          <button class="sbtn" onclick="manSave()">Сохранить</button>
+          <button class="sbtn red" onclick="doReset()">Сброс</button>
+        </div></div>
+    </div>
+    <div class="stab-c" id="sk">
+      <div class="srow"><div class="slbl"><span>Движение</span></div><div class="sctl"><span class="kbind">W A S D</span></div></div>
+      <div class="srow"><div class="slbl"><span>Бег</span></div><div class="sctl"><span class="kbind">Shift</span></div></div>
+      <div class="srow"><div class="slbl"><span>Инвентарь</span></div><div class="sctl"><span class="kbind">I</span></div></div>
+      <div class="srow"><div class="slbl"><span>Сборка снасти</span></div><div class="sctl"><span class="kbind">R</span></div></div>
+      <div class="srow"><div class="slbl"><span>Бурить лунку</span></div><div class="sctl"><span class="kbind">B</span></div></div>
+      <div class="srow"><div class="slbl"><span>Рыбачить</span></div><div class="sctl"><span class="kbind">F</span></div></div>
+      <div class="srow"><div class="slbl"><span>Поставить палатку</span></div><div class="sctl"><span class="kbind">T</span></div></div>
+      <div class="srow"><div class="slbl"><span>Магазин</span></div><div class="sctl"><span class="kbind">G</span></div></div>
+      <div class="srow"><div class="slbl"><span>Подсечка / Бурение</span></div><div class="sctl"><span class="kbind">Пробел</span></div></div>
+      <div class="srow"><div class="slbl"><span>Пауза / Закрыть</span></div><div class="sctl"><span class="kbind">Esc</span></div></div>
+    </div>
+    <div class="sf">
+      <button class="sbtn" onclick="resetS()">По умолчанию</button>
+      <button class="sbtn bl" onclick="closeSett()">Применить</button>
+    </div>
+  </div>
+</div>
+
+<div id="scr-pause">
+  <div class="pb"></div>
+  <div class="pbox">
+    <h2>Пауза</h2>
+    <p>FrostLine — Зимняя Рыбалка</p>
+    <button class="mbtn mbtn-p" onclick="resumeG()">Продолжить</button>
+    <button class="mbtn mbtn-s" onclick="openSett(true)">Настройки</button>
+    <button class="mbtn mbtn-s" onclick="goMenu()">Главное меню</button>
+  </div>
+</div>
+
+<canvas id="gc"></canvas>
+
+<div id="hud">
+  <div id="timebar">
+    <span id="tb-ic" style="font-size:13px;color:#94a3b8">--</span>
+    <span id="tb-tm" style="font-weight:700;font-size:13px;letter-spacing:1px">08:00</span>
+    <div class="tbsep"></div>
+    <div id="tb-dn"><div id="tb-dnf" style="width:33%"></div></div>
+    <div class="tbsep"></div>
+    <span id="tb-wi" style="font-size:12px;color:#94a3b8">--</span>
+    <span id="tb-wl" style="font-size:12px;color:#94a3b8">Ясно</span>
+    <div class="tbsep"></div>
+    <span id="tb-tp" style="font-size:12px;color:#7dd3fc">-8C</span>
+  </div>
+  <div id="statpanel">
+    <div class="spt">Статистика</div>
+    <div class="spr"><span>Поймано:</span><span class="spv g" id="sv-f">0</span></div>
+    <div class="spr"><span>Вес:</span><span class="spv" id="sv-w">0 кг</span></div>
+    <div class="spr"><span>Лунок:</span><span class="spv" id="sv-h">0</span></div>
+    <div class="spr"><span>Рекорд:</span><span class="spv y" id="sv-r">--</span></div>
+    <div class="spr"><span>Сессия:</span><span class="spv" id="sv-s">0:00</span></div>
+  </div>
+  <div id="catchpanel">
+    <h4>Улов</h4>
+    <div id="catchlog"></div>
+  </div>
+  <div id="money-panel">
+    <span style="color:#fbbf24;font-size:13px">Монеты:</span>
+    <span id="money-val">0</span>
+  </div>
+</div>
+
+<div id="xhair"></div>
+
+<div id="botbar">
+  <div class="abtn" onclick="openInv()">
+    <span style="font-size:13px;font-weight:700">Инв</span>
+    <span class="al">Инвентарь</span><span class="ak">[I]</span>
+  </div>
+  <div class="abtn" onclick="openAsm()">
+    <span style="font-size:13px;font-weight:700">Сбр</span>
+    <span class="al">Сборка</span><span class="ak">[R]</span>
+  </div>
+  <div class="abtn" onclick="doDrill()">
+    <span style="font-size:13px;font-weight:700">Бур</span>
+    <span class="al">Бурить</span><span class="ak">[B]</span>
+  </div>
+  <div class="abtn" id="btn-fish" onclick="doFish()">
+    <span style="font-size:13px;font-weight:700">Рыб</span>
+    <span class="al">Рыбачить</span><span class="ak">[F]</span>
+  </div>
+  <div class="abtn" onclick="doTent()">
+    <span style="font-size:13px;font-weight:700">Пал</span>
+    <span class="al">Палатка</span><span class="ak">[T]</span>
+  </div>
+  <div class="abtn" onclick="openShop()">
+    <span style="font-size:13px;font-weight:700">Маг</span>
+    <span class="al">Магазин</span><span class="ak">[G]</span>
+  </div>
+</div>
+
+<div id="fishui">
+  <div id="fishstatus">Ожидание поклёвки...</div>
+  <div id="bitewrap">
+    <div id="bitetitle">КЛЮЁТ! Нажмите [Пробел]</div>
+    <div class="pl"><span>Слабо</span><span>Зона подсечки</span><span>Сильно</span></div>
+    <div id="ptrack">
+      <div id="pzone" style="left:25%;width:50%"></div>
+      <div id="pfill"></div>
+      <div id="pmark" style="left:0%"></div>
+    </div>
+    <div id="phint">Поймай маркер в зелёной зоне</div>
+  </div>
+</div>
+
+<div id="drillui">
+  <h4>Бурение лунки</h4>
+  <div id="dtrack"><div id="dfill"></div></div>
+  <div id="dlabel">Удерживайте [Пробел]</div>
+</div>
+
+<div id="catchpop">
+  <div id="cpname">Окунь</div>
+  <div id="cpwt">0.5 кг</div>
+  <div id="cprec">НОВЫЙ РЕКОРД!</div>
+  <div id="cpmoney">+ 0 монет</div>
+</div>
+
+<div id="prompt"></div>
+<div id="minimap"><canvas id="mmcanvas" width="104" height="104"></canvas></div>
+
+<div id="invbg" onclick="closeInv()"></div>
+<div id="invbox">
+  <h2>Инвентарь</h2>
+  <div class="itabs">
+    <div class="itab on" onclick="switchItab(this,'rods')">Удочки</div>
+    <div class="itab" onclick="switchItab(this,'jigs')">Мормышки</div>
+    <div class="itab" onclick="switchItab(this,'lures')">Блёсны</div>
+    <div class="itab" onclick="switchItab(this,'baits')">Наживки</div>
+    <div class="itab" onclick="switchItab(this,'lines')">Лески</div>
+    <div class="itab" onclick="switchItab(this,'tools')">Инструменты</div>
+    <div class="itab" onclick="switchItab(this,'equipped')">Снаряжено</div>
+  </div>
+  <div class="igrid" id="igrid"></div>
+  <div class="iclose"><button onclick="closeInv()">Закрыть [Esc]</button></div>
+</div>
+
+<div id="asmbg" onclick="closeAsm()"></div>
+<div id="asmbox">
+  <div class="drag-handle" id="asm-handle">
+    <div class="dd"><span><i></i><i></i><i></i></span><span><i></i><i></i><i></i></span></div>
+    <h3>Сборка Снасти</h3>
+    <div class="dd"><span><i></i><i></i><i></i></span><span><i></i><i></i><i></i></span></div>
+  </div>
+  <div class="aflow">
+    <div class="aslot" id="as-rod" onclick="pickSlot('rod')">
+      <span class="asi" id="ai-rod">--</span><span class="asn">Удочка</span>
+      <span class="asv" id="av-rod"></span><span class="asx" onclick="clrSlot(event,'rod')">x</span>
+    </div>
+    <span class="aplus">+</span>
+    <div class="aslot" id="as-line" onclick="pickSlot('line')">
+      <span class="asi" id="ai-line">--</span><span class="asn">Леска</span>
+      <span class="asv" id="av-line"></span><span class="asx" onclick="clrSlot(event,'line')">x</span>
+    </div>
+    <span class="aplus">+</span>
+    <div class="aslot" id="as-hook" onclick="pickSlot('hook')">
+      <span class="asi" id="ai-hook">--</span><span class="asn">Мормышка</span>
+      <span class="asv" id="av-hook"></span><span class="asx" onclick="clrSlot(event,'hook')">x</span>
+    </div>
+    <span class="aplus">+</span>
+    <div class="aslot" id="as-bait" onclick="pickSlot('bait')">
+      <span class="asi" id="ai-bait">--</span><span class="asn">Наживка</span>
+      <span class="asv" id="av-bait"></span><span class="asx" onclick="clrSlot(event,'bait')">x</span>
+    </div>
+    <span class="aplus">+</span>
+    <div class="aslot" id="as-float" onclick="pickSlot('float')">
+      <span class="asi" id="ai-float">--</span><span class="asn">Поплавок</span>
+      <span class="asv" id="av-float"></span><span class="asx" onclick="clrSlot(event,'float')">x</span>
+    </div>
+  </div>
+  <div id="aprev"><div class="apt">Характеристики снасти:</div>
+    <div class="aps" id="apstats"><span style="color:#334155">Добавьте компоненты...</span></div></div>
+  <button id="asmbtn" onclick="doAssemble()" disabled>Собрать снасть</button>
+  <div class="asmc">Нажмите на слот, затем выберите предмет в инвентаре</div>
+  <button class="asmcls" onclick="closeAsm()">Закрыть [Esc]</button>
+</div>
+
+<div id="shopbg" onclick="closeShop()"></div>
+<div id="shopbox">
+  <h2>Магазин Снастей</h2>
+  <div class="shop-bal">Баланс: <span id="shop-bal">0</span> монет</div>
+  <div class="shop-tabs">
+    <div class="shop-tab on" onclick="switchShopTab(this,'srods')">Удочки</div>
+    <div class="shop-tab" onclick="switchShopTab(this,'sjigs')">Мормышки</div>
+    <div class="shop-tab" onclick="switchShopTab(this,'slures')">Блёсны</div>
+    <div class="shop-tab" onclick="switchShopTab(this,'sbaits')">Наживки</div>
+    <div class="shop-tab" onclick="switchShopTab(this,'slines')">Лески</div>
+    <div class="shop-tab" onclick="switchShopTab(this,'stools')">Инструменты</div>
+  </div>
+  <div class="sgrid" id="sgrid"></div>
+  <button class="sclose-btn" onclick="closeShop()">Закрыть</button>
+</div>
+
+<script>
+// Загружаем Three.js динамически чтобы не блокировать
+(function(){
+  var script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  script.onload = function(){ window._threeReady = true; tryBoot(); };
+  script.onerror = function(){ document.getElementById('lstep').textContent = 'Ошибка загрузки Three.js!'; };
+  document.head.appendChild(script);
+})();
+
+var _domReady = false;
+document.addEventListener('DOMContentLoaded', function(){ _domReady = true; tryBoot(); });
+if(document.readyState !== 'loading'){ _domReady = true; tryBoot(); }
+
+function tryBoot(){
+  if(!window._threeReady || !_domReady) return;
+  init();
+}
+
+function init(){
+  loadS();
+  // Показать экран загрузки на секунду, потом меню
+  var fill = document.getElementById('lfill');
+  var step = document.getElementById('lstep');
+  var pct = 0;
+  var steps = ['Инициализация...','Загрузка ресурсов...','Подготовка мира...','Готово!'];
+  var si = 0;
+  var iv = setInterval(function(){
+    pct = Math.min(100, pct + 25);
+    fill.style.width = pct + '%';
+    step.textContent = steps[si] || 'Готово!';
+    si++;
+    if(pct >= 100){
+      clearInterval(iv);
+      setTimeout(function(){
+        var sl = document.getElementById('scr-load');
+        sl.style.transition = 'opacity .6s';
+        sl.style.opacity = '0';
+        setTimeout(function(){
+          sl.style.display = 'none';
+          showMenu();
+        }, 600);
+      }, 300);
+    }
+  }, 200);
+}
+
+// ═══════════════════════════════
+// НАСТРОЙКИ
+// ═══════════════════════════════
+var SETS = {
+  shadows:true, snow:true, fog:true, refl:true, stars:true,
+  mouseSens:18, fov:72, sound:true, volume:70, timeSpeed:1,
+  difficulty:'normal', autosave:true, regen:true, minimap:true
+};
+function loadS(){ try{ var s=localStorage.getItem('fl_sets'); if(s) Object.assign(SETS,JSON.parse(s)); }catch(e){} }
+function saveS(){ localStorage.setItem('fl_sets', JSON.stringify(SETS)); }
+function togS(el,k){ el.classList.toggle('on'); SETS[k]=el.classList.contains('on'); saveS(); applyS(); }
+function rngS(k,v){ SETS[k]=parseFloat(v); saveS(); applyS(); }
+function resetS(){
+  Object.assign(SETS,{shadows:true,snow:true,fog:true,refl:true,stars:true,
+    mouseSens:18,fov:72,sound:true,volume:70,timeSpeed:1,
+    difficulty:'normal',autosave:true,regen:true,minimap:true});
+  saveS(); syncSUI(); applyS();
+}
+function syncSUI(){
+  var m={shadows:'t-sh',snow:'t-sn',fog:'t-fg',refl:'t-rf',stars:'t-st',
+    sound:'t-so',autosave:'t-as',regen:'t-rg',minimap:'t-mm'};
+  for(var k in m){ var el=document.getElementById(m[k]); if(el) el.classList.toggle('on',!!SETS[k]); }
+  var rm=document.getElementById('r-ms'); if(rm){rm.value=SETS.mouseSens;rm.nextElementSibling.textContent=SETS.mouseSens;}
+  var rf=document.getElementById('r-fv'); if(rf){rf.value=SETS.fov;rf.nextElementSibling.textContent=SETS.fov;}
+  var rv=document.getElementById('r-vl'); if(rv){rv.value=SETS.volume;rv.nextElementSibling.textContent=SETS.volume+'%';}
+  var st=document.getElementById('s-ts'); if(st) st.value=String(SETS.timeSpeed);
+  var sd=document.getElementById('s-df'); if(sd) sd.value=SETS.difficulty;
+  var si=document.getElementById('sinfo');
+  if(si){ var raw=localStorage.getItem('fl_save');
+    if(raw){try{var d=JSON.parse(raw);si.textContent=d.fishCaught+'рыб, '+d.money+'монет';}catch(e){si.textContent='Нет данных';}}
+    else si.textContent='Нет данных'; }
+}
+function applyS(){
+  if(!gameOn) return;
+  if(camera){ camera.fov=SETS.fov; camera.updateProjectionMatrix(); }
+  if(renderer) renderer.shadowMap.enabled=SETS.shadows;
+  if(G.three.snowPts){ G.three.snowPts.visible=SETS.snow; G.three.blizzPts.visible=SETS.snow; }
+  if(G.three.stars) G.three.stars.visible=SETS.stars;
+  if(G.three.iceMat) G.three.iceMat.metalness=SETS.refl?0.15:0;
+  if(scene) scene.fog.density=SETS.fog?0.004:0.0001;
+  CFG.GSPEED=SETS.timeSpeed;
+  var mm=document.getElementById('minimap'); if(mm) mm.style.display=SETS.minimap&&gameOn?'block':'none';
+  var diffs={easy:[15,85],normal:[25,75],hard:[38,62]};
+  var z=diffs[SETS.difficulty]||[25,75];
+  var pz=document.getElementById('pzone'); if(pz){pz.style.left=z[0]+'%';pz.style.width=(z[1]-z[0])+'%';}
+}
+var fromPause=false;
+function openSett(fp){
+  fromPause=!!fp; if(fp) hidePause();
+  syncSUI(); document.getElementById('scr-sett').style.display='flex';
+}
+function closeSett(){
+  document.getElementById('scr-sett').style.display='none';
+  if(fromPause){ fromPause=false; showPause(); }
+}
+function openControls(){ openSett(false); setTimeout(function(){ document.querySelectorAll('.stab')[3].click(); },50); }
+function switchStab(el,id){
+  document.querySelectorAll('.stab').forEach(function(t){t.classList.remove('on');});
+  document.querySelectorAll('.stab-c').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on'); document.getElementById(id).classList.add('on');
+}
+
+// ═══════════════════════════════
+// ПРЕДМЕТЫ
+// ═══════════════════════════════
+var ALL_ITEMS = {
+  rods:[
+    {id:'rod_basic',name:'Удочка зимняя',ico:'|==',desc:'Стартовая',type:'rod',bm:1.0,stat:'Чувств: 1',price:0},
+    {id:'rod_mid',name:'Удочка средняя',ico:'|===',desc:'Лучше чувство',type:'rod',bm:1.15,stat:'Чувств: 2',price:120},
+    {id:'rod_spin',name:'Спиннинг',ico:'|====',desc:'Для крупной',type:'rod',bm:1.3,stat:'Тест: 5-25г',price:280},
+    {id:'rod_carb',name:'Карбон Про',ico:'|=====',desc:'Профи',type:'rod',bm:1.5,stat:'Чувств: 5',price:650},
+  ],
+  lines:[
+    {id:'line_01',name:'Леска 0.12мм',ico:'~~~',desc:'Стартовая',type:'line',bm:1.0,stat:'Разрыв: 1.2кг',price:0},
+    {id:'line_02',name:'Леска 0.18мм',ico:'~~~~',desc:'Стандарт',type:'line',bm:0.95,stat:'Разрыв: 2.5кг',price:60},
+    {id:'line_03',name:'Леска 0.25мм',ico:'~~~~~',desc:'Толстая',type:'line',bm:0.88,stat:'Разрыв: 4.8кг',price:110},
+    {id:'line_br',name:'Плетёнка 0.1',ico:'===~',desc:'Без растяжки',type:'line',bm:1.28,stat:'Разрыв: 6кг',price:240},
+  ],
+  jigs:[
+    {id:'jig_basic',name:'Свинцовая',ico:'(o)',desc:'Стартовая мормышка',type:'hook',bm:1.0,stat:'Глуб: 2-6м',price:0},
+    {id:'jig_drop',name:'Вольфрам капля',ico:'(*)',desc:'Тяжёлый вольфрам',type:'hook',bm:1.2,stat:'Глуб: 2-5м',price:90},
+    {id:'jig_devil',name:'Чёрт',ico:'(#)',desc:'Безнасадочная',type:'hook',bm:1.38,stat:'Универсал',price:150},
+    {id:'jig_cobra',name:'Кобра',ico:'({)',desc:'Силикон',type:'hook',bm:1.25,stat:'Хищник',price:120},
+  ],
+  lures:[
+    {id:'lure_silver',name:'Блесна серебро',ico:'>-',desc:'Серебристая',type:'hook',bm:1.3,stat:'Щука/Окунь',price:0},
+    {id:'lure_gold',name:'Блесна золото',ico:'>>=',desc:'Золотая',type:'hook',bm:1.22,stat:'Окунь+',price:140},
+    {id:'lure_pilk',name:'Пилькер 15г',ico:'>>|',desc:'Большая глубина',type:'hook',bm:1.42,stat:'Трофей',price:200},
+    {id:'lure_bal',name:'Балансир',ico:'<>',desc:'Раппала',type:'hook',bm:1.48,stat:'Хищник+',price:320},
+  ],
+  baits:[
+    {id:'bait_worm',name:'Червь',ico:'www',desc:'Универсальная',type:'bait',bm:1.18,stat:'Окунь +++',price:0},
+    {id:'bait_maggot',name:'Мотыль',ico:'mmm',desc:'Красный мотыль',type:'bait',bm:1.35,stat:'Любая рыба',price:30},
+    {id:'bait_blood',name:'Опарыш',ico:'ooo',desc:'Активный',type:'bait',bm:1.25,stat:'Лещ +',price:25},
+    {id:'bait_piece',name:'Кусочек рыбы',ico:'~f~',desc:'Для хищника',type:'bait',bm:1.32,stat:'Щука +',price:45},
+  ],
+  floats:[
+    {id:'float_c',name:'Поплавок',ico:'(O)',desc:'Стартовый',type:'float',bm:1.0,stat:'Глуб: 0-2м',price:0},
+    {id:'float_l',name:'Длинный',ico:'|(O)',desc:'На течении',type:'float',bm:1.1,stat:'Глуб: 1-4м',price:50},
+    {id:'float_glow',name:'Светящийся',ico:'*(O)',desc:'Ночная ловля',type:'float',bm:1.22,stat:'Ночь++',price:85},
+  ],
+  tools:[
+    {id:'drill_h100',name:'Ледобур 100мм',ico:'O/',desc:'Ручной',type:'drill',ds:22,stat:'Диам: 100мм',price:0},
+    {id:'drill_h130',name:'Ледобур 130мм',ico:'O//',desc:'Шире',type:'drill',ds:18,stat:'Диам: 130мм',price:90},
+    {id:'drill_moto',name:'Мотоледобур',ico:'M//',desc:'Бензиновый',type:'drill',ds:70,stat:'Быстрый',price:380},
+    {id:'drill_elec',name:'Электробур',ico:'E//',desc:'Аккумулятор',type:'drill',ds:85,stat:'Тихий',price:550},
+    {id:'tent',name:'Палатка зимняя',ico:'/\\',desc:'Укрытие',type:'tent',stat:'4 места',price:0},
+    {id:'heater',name:'Обогреватель',ico:'|-|-|',desc:'Газовый',type:'tool',stat:'Тепло',price:120},
+    {id:'gaff',name:'Багор',ico:'J',desc:'Для крупной',type:'tool',stat:'+шанс',price:70},
+  ]
+};
+
+var FISH = [
+  {id:'perch',name:'Окунь',min:0.05,max:1.8,r:0.28,baits:['bait_worm','jig_devil','lure_gold'],val:8},
+  {id:'roach',name:'Плотва',min:0.05,max:0.6,r:0.25,baits:['bait_maggot','float_c'],val:5},
+  {id:'ruff',name:'Ёрш',min:0.02,max:0.12,r:0.18,baits:['bait_worm','bait_maggot'],val:3},
+  {id:'bream',name:'Лещ',min:0.2,max:3.5,r:0.10,baits:['bait_blood','jig_basic'],val:15},
+  {id:'pike',name:'Щука',min:0.4,max:9.0,r:0.055,baits:['bait_piece','lure_silver','lure_bal'],val:40},
+  {id:'pikeperch',name:'Судак',min:0.3,max:6.0,r:0.045,baits:['lure_silver','lure_pilk'],val:35},
+  {id:'burbot',name:'Налим',min:0.2,max:5.0,r:0.04,baits:['bait_worm','jig_cobra'],val:30,nb:3},
+  {id:'carp',name:'Карась',min:0.05,max:0.8,r:0.035,baits:['bait_blood'],val:10},
+  {id:'trophy',name:'Щука-трофей',min:6.0,max:18.0,r:0.004,baits:['lure_bal','lure_pilk'],val:200}
+];
+
+// ═══════════════════════════════
+// ИГРОВОЕ СОСТОЯНИЕ
+// ═══════════════════════════════
+var CFG = {GSPEED:1,WALK:3.2,RUN:6.5,ICE:580,TREES:55,DRIFTS:80,SNW:3000,BLIZ:5000,STARS:2000};
+var WCFG = {
+  clear:{label:'Ясно',tempMod:0,fogMod:0.003,wind:0.1,amb:1.0},
+  cloudy:{label:'Облачно',tempMod:-3,fogMod:0.006,wind:0.3,amb:0.65},
+  overcast:{label:'Пасмурно',tempMod:-5,fogMod:0.009,wind:0.4,amb:0.50},
+  snow:{label:'Снегопад',tempMod:-2,fogMod:0.010,wind:0.5,amb:0.55},
+  blizzard:{label:'Метель',tempMod:-7,fogMod:0.022,wind:3.0,amb:0.30}
+};
+var SKY = {
+  night:{sky:0x030610,amb:0.06,di:0.04,dc:0x0a1530,temp:-20},
+  predawn:{sky:0x0d1535,amb:0.12,di:0.15,dc:0x302050,temp:-17},
+  dawn:{sky:0xff7040,amb:0.30,di:0.55,dc:0xff6020,temp:-14},
+  morning:{sky:0x78bcd8,amb:0.55,di:0.90,dc:0xfff0cc,temp:-10},
+  noon:{sky:0x3090c8,amb:0.75,di:1.20,dc:0xffffff,temp:-6},
+  afternoon:{sky:0x4898c4,amb:0.65,di:1.0,dc:0xfff5dd,temp:-7},
+  evening:{sky:0xff5522,amb:0.35,di:0.50,dc:0xff6633,temp:-10},
+  dusk:{sky:0x1a0830,amb:0.14,di:0.12,dc:0x301048,temp:-13}
+};
+
+var G = {
+  time:480,sess:0,
+  weather:'clear',targetW:'clear',wTimer:0,wDur:300,wDir:0,
+  pos:null,yaw:0,pitch:0,keys:{},locked:false,
+  holes:[],tents:[],nearHole:null,activeHole:null,
+  mode:'walk',drillProg:0,
+  fishing:false,biteTimer:0,biteActive:false,
+  hookPos:0,hookDir:1,hookSpd:40,missTimer:0,
+  fishCaught:0,totalWt:0,catchLog:[],recFish:null,holesDug:0,
+  money:0,owned:{},
+  equipped:{rod:null,line:null,hook:null,bait:null,float:null,drill:null},
+  asm:{rod:null,line:null,hook:null,bait:null,float:null},
+  assembled:false,pickSlot:null,curTab:'rods',three:{}
+};
+
+function giveStarters(){
+  for(var cat in ALL_ITEMS){
+    ALL_ITEMS[cat].forEach(function(item){ if(item.price===0) G.owned[item.id]=true; });
+  }
+}
+function getOwned(cat){
+  return (ALL_ITEMS[cat]||[]).filter(function(i){return G.owned[i.id];});
+}
+function getAllOwned(){
+  var res=[];
+  for(var k in ALL_ITEMS) ALL_ITEMS[k].forEach(function(i){if(G.owned[i.id])res.push(i);});
+  return res;
+}
+
+// ═══════════════════════════════
+// THREE.JS МИРОВАЯ СЦЕНА
+// ═══════════════════════════════
+var scene,camera,renderer,clock,gameOn=false;
+
+function ctex(w,h,fn){
+  var c=document.createElement('canvas');c.width=w;c.height=h;
+  fn(c.getContext('2d'),w,h); return new THREE.CanvasTexture(c);
+}
+
+function buildWorld(){
+  var T=G.three;
+  T.ambL=new THREE.AmbientLight(0x88aacc,.4); scene.add(T.ambL);
+  T.dirL=new THREE.DirectionalLight(0xfff5e0,1.0);
+  T.dirL.position.set(200,300,100); T.dirL.castShadow=true;
+  T.dirL.shadow.mapSize.set(1024,1024);
+  T.dirL.shadow.camera.left=-200; T.dirL.shadow.camera.right=200;
+  T.dirL.shadow.camera.top=200; T.dirL.shadow.camera.bottom=-200;
+  scene.add(T.dirL);
+  T.hemiL=new THREE.HemisphereLight(0x88aacc,0x334455,.3); scene.add(T.hemiL);
+
+  T.skyMat=new THREE.MeshBasicMaterial({color:0x87ceeb,side:THREE.BackSide});
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(850,24,24),T.skyMat));
+
+  T.sunMat=new THREE.MeshBasicMaterial({color:0xfffce0});
+  T.sunMesh=new THREE.Mesh(new THREE.SphereGeometry(11,12,12),T.sunMat); scene.add(T.sunMesh);
+  T.moonMesh=new THREE.Mesh(new THREE.SphereGeometry(7,12,12),new THREE.MeshBasicMaterial({color:0xddeeff}));
+  scene.add(T.moonMesh);
+
+  // Звёзды
+  var sgeo=new THREE.BufferGeometry(), sp=[];
+  for(var i=0;i<CFG.STARS;i++){
+    var th=Math.random()*Math.PI*2,ph=Math.random()*Math.PI,r=800;
+    sp.push(r*Math.sin(ph)*Math.cos(th),Math.abs(r*Math.cos(ph))+30,r*Math.sin(ph)*Math.sin(th));
+  }
+  sgeo.setAttribute('position',new THREE.Float32BufferAttribute(sp,3));
+  T.stars=new THREE.Points(sgeo,new THREE.PointsMaterial({color:0xffffff,size:1.6,transparent:true,opacity:0}));
+  scene.add(T.stars);
+
+  // Лёд
+  var iceTex=ctex(512,512,function(ctx,W,H){
+    var g=ctx.createLinearGradient(0,0,W,H);
+    g.addColorStop(0,'#b8d8ee');g.addColorStop(.5,'#c8e4f4');g.addColorStop(1,'#a8ccde');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    for(var i=0;i<60;i++){
+      ctx.beginPath();ctx.arc(Math.random()*W,Math.random()*H,1+Math.random()*3,0,Math.PI*2);
+      ctx.strokeStyle='rgba(180,220,240,'+(0.12+Math.random()*0.22)+')';ctx.lineWidth=.5;ctx.stroke();
+    }
+    for(var i=0;i<8;i++){
+      ctx.beginPath();var cx=Math.random()*W,cy=Math.random()*H;ctx.moveTo(cx,cy);
+      for(var j=0;j<5;j++){cx+=(Math.random()-.5)*28;cy+=(Math.random()-.5)*28;ctx.lineTo(cx,cy);}
+      ctx.strokeStyle='rgba(100,160,200,'+(0.07+Math.random()*0.1)+')';ctx.lineWidth=.5;ctx.stroke();
+    }
+  });
+  iceTex.wrapS=iceTex.wrapT=THREE.RepeatWrapping; iceTex.repeat.set(16,16);
+  var igeo=new THREE.PlaneGeometry(CFG.ICE,CFG.ICE,64,64);
+  var ip=igeo.attributes.position;
+  for(var i=0;i<ip.count;i++) ip.setZ(i,(Math.random()-.5)*.05);
+  ip.needsUpdate=true; igeo.computeVertexNormals();
+  T.iceMat=new THREE.MeshStandardMaterial({map:iceTex,roughness:.3,metalness:SETS.refl?.15:0});
+  var im=new THREE.Mesh(igeo,T.iceMat); im.rotation.x=-Math.PI/2; im.receiveShadow=true; scene.add(im);
+
+  // Снег на льду
+  var snowTex=ctex(512,512,function(ctx,W,H){
+    var g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W/1.4);
+    g.addColorStop(0,'#f0f7ff');g.addColorStop(.5,'#e4f0f8');g.addColorStop(1,'#d8eaf4');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    for(var i=0;i<600;i++){
+      ctx.fillStyle='rgba(255,255,255,'+(Math.random()*.07)+')';
+      ctx.fillRect(Math.random()*W,Math.random()*H,Math.random()*2,Math.random()*2);
+    }
+  });
+  snowTex.wrapS=snowTex.wrapT=THREE.RepeatWrapping; snowTex.repeat.set(12,12);
+  var sg=new THREE.PlaneGeometry(CFG.ICE,CFG.ICE,32,32);
+  var sp2=sg.attributes.position;
+  for(var i=0;i<sp2.count;i++) sp2.setZ(i,(Math.random()-.5)*.07);
+  sp2.needsUpdate=true; sg.computeVertexNormals();
+  var sm=new THREE.Mesh(sg,new THREE.MeshStandardMaterial({map:snowTex,roughness:.98,transparent:true,opacity:.86}));
+  sm.rotation.x=-Math.PI/2; sm.position.y=.018; sm.receiveShadow=true; scene.add(sm);
+
+  // Трещины
+  for(var i=0;i<6;i++){
+    var m=new THREE.Mesh(
+      new THREE.BoxGeometry(10+Math.random()*35,.055+Math.random()*0.08,.2+Math.random()*0.3),
+      new THREE.MeshStandardMaterial({color:0xb0cce0,roughness:.7}));
+    m.position.set((Math.random()-.5)*280,.025,(Math.random()-.5)*280);
+    m.rotation.y=Math.random()*Math.PI; scene.add(m);
+  }
+
+  // Деревья
+  for(var i=0;i<CFG.TREES;i++){
+    var ang=Math.random()*Math.PI*2, dist=75+Math.random()*260;
+    var x=Math.cos(ang)*dist, z=Math.sin(ang)*dist, h=5+Math.random()*10;
+    var trunk=new THREE.Mesh(new THREE.CylinderGeometry(.1,.19,h*.32,6),
+      new THREE.MeshStandardMaterial({color:0x3a2a18,roughness:.9}));
+    trunk.position.set(x,h*.16,z); trunk.castShadow=true; scene.add(trunk);
+    var layers=3+Math.floor(Math.random()*2);
+    for(var l=0;l<layers;l++){
+      var cr=h*.29*(1-l*.18),cy=h*.24+l*h*.2;
+      var cone=new THREE.Mesh(new THREE.ConeGeometry(cr,h*.36,6),
+        new THREE.MeshStandardMaterial({color:new THREE.Color().setHSL(.35,.56,.12+Math.random()*.04),roughness:.85}));
+      cone.position.set(x,cy,z); cone.castShadow=true; scene.add(cone);
+      var sc=new THREE.Mesh(new THREE.ConeGeometry(cr*.82,h*.06,6),
+        new THREE.MeshStandardMaterial({color:0xe8f2fc,roughness:.98}));
+      sc.position.set(x,cy+h*.13,z); scene.add(sc);
+    }
+  }
+
+  // Сугробы
+  for(var i=0;i<CFG.DRIFTS;i++){
+    var ang=Math.random()*Math.PI*2, dist=4+Math.random()*160;
+    var x=Math.cos(ang)*dist, z=Math.sin(ang)*dist;
+    var r=.3+Math.random()*2.8, hd=r*.16+Math.random()*.2;
+    var dm=new THREE.Mesh(new THREE.SphereGeometry(r,6,4),
+      new THREE.MeshStandardMaterial({color:new THREE.Color(.87+Math.random()*.09,.92+Math.random()*.06,.97),roughness:.98}));
+    dm.position.set(x,-r+hd,z); dm.scale.set(1+Math.random()*.3,hd/r,1+Math.random()*.3); scene.add(dm);
+  }
+
+  // Снег
+  var pgeo=new THREE.BufferGeometry(), pp=new Float32Array(CFG.SNW*3);
+  for(var i=0;i<CFG.SNW;i++){pp[i*3]=(Math.random()-.5)*100;pp[i*3+1]=Math.random()*28;pp[i*3+2]=(Math.random()-.5)*100;}
+  pgeo.setAttribute('position',new THREE.Float32BufferAttribute(pp,3));
+  T.snowPts=new THREE.Points(pgeo,new THREE.PointsMaterial({color:0xffffff,size:.11,transparent:true,opacity:0,depthWrite:false}));
+  T.snowPts.visible=SETS.snow; scene.add(T.snowPts);
+
+  var bgeo=new THREE.BufferGeometry(), bp=new Float32Array(CFG.BLIZ*3);
+  for(var i=0;i<CFG.BLIZ;i++){bp[i*3]=(Math.random()-.5)*65;bp[i*3+1]=Math.random()*17;bp[i*3+2]=(Math.random()-.5)*65;}
+  bgeo.setAttribute('position',new THREE.Float32BufferAttribute(bp,3));
+  T.blizzPts=new THREE.Points(bgeo,new THREE.PointsMaterial({color:0xeef5ff,size:.18,transparent:true,opacity:0,depthWrite:false}));
+  T.blizzPts.visible=SETS.snow; scene.add(T.blizzPts);
+
+  scene.fog=new THREE.FogExp2(0xb0cce0,.004);
+}
+
+function makeHole(hx,hz){
+  var g=new THREE.Group();
+  var holeTex=ctex(256,256,function(ctx,W,H){
+    var gr=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W/2);
+    gr.addColorStop(0,'#020810');gr.addColorStop(.5,'#040f1a');gr.addColorStop(1,'#1a3a50');
+    ctx.fillStyle=gr;ctx.fillRect(0,0,W,H);
+  });
+  var h=new THREE.Mesh(new THREE.CircleGeometry(.34,24),new THREE.MeshBasicMaterial({map:holeTex}));
+  h.rotation.x=-Math.PI/2; h.position.y=.024; g.add(h);
+  var rim=new THREE.Mesh(new THREE.RingGeometry(.34,.52,24),new THREE.MeshStandardMaterial({color:0x8ab8d0,roughness:.55}));
+  rim.rotation.x=-Math.PI/2; rim.position.y=.025; g.add(rim);
+  var sr=new THREE.Mesh(new THREE.RingGeometry(.52,.75,24),new THREE.MeshStandardMaterial({color:0xddeef8,roughness:.98}));
+  sr.rotation.x=-Math.PI/2; sr.position.y=.023; g.add(sr);
+  for(var i=0;i<7;i++){
+    var sz=.035+Math.random()*.07;
+    var c=new THREE.Mesh(new THREE.BoxGeometry(sz,.02+Math.random()*.022,sz*.6),
+      new THREE.MeshStandardMaterial({color:0xb8d8ee,roughness:.6,transparent:true,opacity:.68}));
+    var a=(i/7)*Math.PI*2+Math.random()*.4, rv=.48+Math.random()*.18;
+    c.position.set(Math.cos(a)*rv,.022,Math.sin(a)*rv); c.rotation.y=Math.random()*Math.PI; g.add(c);
+  }
+  var w=new THREE.Mesh(new THREE.CircleGeometry(.32,24),
+    new THREE.MeshStandardMaterial({color:0x1a4a6a,roughness:.05,metalness:.8,transparent:true,opacity:.6}));
+  w.rotation.x=-Math.PI/2; w.position.y=.023; w.name='water'; g.add(w);
+  g.position.set(hx,0,hz); scene.add(g); return g;
+}
+
+function makeTent(tx,tz){
+  var g=new THREE.Group();
+  var body=new THREE.Mesh(new THREE.ConeGeometry(1.65,2.05,4),new THREE.MeshStandardMaterial({color:0x1a3a6a,roughness:.9}));
+  body.position.y=1.02; body.rotation.y=Math.PI/4; body.castShadow=true; g.add(body);
+  var st=new THREE.Mesh(new THREE.ConeGeometry(1.67,.28,4),new THREE.MeshStandardMaterial({color:0xe4f0f8,roughness:.98}));
+  st.position.y=1.9; st.rotation.y=Math.PI/4; g.add(st);
+  var door=new THREE.Mesh(new THREE.PlaneGeometry(.48,.78),new THREE.MeshBasicMaterial({color:0x030810,side:THREE.DoubleSide}));
+  door.position.set(0,.38,1.17); g.add(door);
+  g.position.set(tx,0,tz); scene.add(g); return g;
+}
+
+function makeFishVis(hx,hz){
+  rmObj('fishLine'); rmObj('fishBob'); rmObj('fishFloat');
+  var lm=new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(hx,.4,hz),new THREE.Vector3(hx,.035,hz)]),
+    new THREE.LineBasicMaterial({color:0xbbccdd,transparent:true,opacity:.55}));
+  lm.name='fishLine'; scene.add(lm); G.three.fishLine=lm;
+  var jig=new THREE.Mesh(new THREE.SphereGeometry(.035,8,8),
+    new THREE.MeshStandardMaterial({color:0x334455,metalness:.85,roughness:.2}));
+  jig.position.set(hx,.035,hz); jig.name='fishBob'; scene.add(jig); G.three.fishBob=jig;
+  if(G.asm.float){
+    var fm=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.16,8),
+      new THREE.MeshStandardMaterial({color:0xcc1111,roughness:.4}));
+    fm.position.set(hx,.06,hz); fm.name='fishFloat'; scene.add(fm); G.three.fishFloat=fm;
+  }
+}
+function rmObj(name){ var o=scene.getObjectByName(name); if(o) scene.remove(o); }
+
+// ═══════════════════════════════
+// ВРЕМЯ И ПОГОДА
+// ═══════════════════════════════
+function getPresets(min){
+  if(min<60)  return[SKY.night,SKY.predawn,min/60];
+  if(min<120) return[SKY.predawn,SKY.dawn,(min-60)/60];
+  if(min<240) return[SKY.dawn,SKY.morning,(min-120)/120];
+  if(min<480) return[SKY.morning,SKY.noon,(min-240)/240];
+  if(min<720) return[SKY.noon,SKY.afternoon,(min-480)/240];
+  if(min<900) return[SKY.afternoon,SKY.evening,(min-720)/180];
+  if(min<1020)return[SKY.evening,SKY.dusk,(min-900)/120];
+  if(min<1200)return[SKY.dusk,SKY.night,(min-1020)/180];
+  return[SKY.night,SKY.night,0];
+}
+function lhex(c1,c2,t){
+  var r1=(c1>>16)&255,g1=(c1>>8)&255,b1=c1&255;
+  var r2=(c2>>16)&255,g2=(c2>>8)&255,b2=c2&255;
+  return(Math.round(r1+(r2-r1)*t)<<16)|(Math.round(g1+(g2-g1)*t)<<8)|Math.round(b1+(b2-b1)*t);
+}
+function lerp(a,b,t){return a+(b-a)*t;}
+
+function tickTime(dt){
+  G.time=(G.time+dt*CFG.GSPEED)%1440; G.sess+=dt;
+  var min=G.time,ps=getPresets(min),s1=ps[0],s2=ps[1],t=ps[2];
+  G.three.skyMat.color.setHex(lhex(s1.sky,s2.sky,t));
+  var wc=WCFG[G.weather]||WCFG.clear;
+  scene.fog.density=lerp(scene.fog.density,SETS.fog?wc.fogMod:.0001,dt*.35);
+  var ai=lerp(s1.amb,s2.amb,t)*wc.amb;
+  G.three.ambL.intensity=lerp(G.three.ambL.intensity,ai,dt*1.5);
+  G.three.hemiL.intensity=ai*.4;
+  var di=lerp(s1.di,s2.di,t)*(wc.amb*1.1);
+  G.three.dirL.intensity=lerp(G.three.dirL.intensity,di,dt*1.5);
+  G.three.dirL.color.setHex(lhex(s1.dc,s2.dc,t));
+  var sa=(min/1440)*Math.PI*2-Math.PI/2;
+  G.three.sunMesh.position.set(Math.cos(sa)*440,Math.sin(sa)*440,-80);
+  G.three.moonMesh.position.set(-Math.cos(sa)*440,-Math.sin(sa)*440,-80);
+  var nightness=Math.max(0,1-ai/.6);
+  if(SETS.stars) G.three.stars.material.opacity=Math.min(.9,nightness*.95);
+  else G.three.stars.material.opacity=0;
+  var isSnow=G.weather==='snow'||G.weather==='blizzard', isBlizz=G.weather==='blizzard';
+  G.three.snowPts.material.opacity=lerp(G.three.snowPts.material.opacity,isSnow?(isBlizz?.45:.65):0,dt*1.1);
+  G.three.blizzPts.material.opacity=lerp(G.three.blizzPts.material.opacity,isBlizz?.82:0,dt*.65);
+  tickSnow(dt);
+
+  var h=Math.floor(min/60),m=Math.floor(min%60);
+  document.getElementById('tb-tm').textContent=pad(h)+':'+pad(m);
+  var tLabels=['Ночь','Ночь','Ночь','Ночь','Ночь','Ночь','Рассвет','Утро','Утро','День','День','День','День','День','День','День','Вечер','Вечер','Сумерки','Ночь','Ночь','Ночь','Ночь','Ночь'];
+  document.getElementById('tb-ic').textContent=tLabels[h]||'День';
+  document.getElementById('tb-wl').textContent=wc.label;
+  document.getElementById('tb-wi').textContent='';
+  document.getElementById('tb-tp').textContent=Math.round(lerp(s1.temp,s2.temp,t)+wc.tempMod)+'C';
+  var df=document.getElementById('tb-dnf');
+  df.style.width=(min/1440*100)+'%';
+  df.style.background=h>=6&&h<=18?'linear-gradient(90deg,#fbbf24,#f97316)':'linear-gradient(90deg,#1e3a5f,#3b6cb0)';
+  var sm=Math.floor(G.sess/60),ss=Math.floor(G.sess%60);
+  document.getElementById('sv-s').textContent=sm+':'+pad(ss);
+}
+function pad(n){return String(n).padStart(2,'0');}
+
+function tickSnow(dt){
+  var wc=WCFG[G.weather]||WCFG.clear, wind=wc.wind, wa=G.wDir;
+  var cx=camera.position.x,cy=camera.position.y,cz=camera.position.z;
+  var p=G.three.snowPts.geometry.attributes.position.array;
+  var isS=G.weather==='snow'||G.weather==='blizzard';
+  for(var i=0;i<p.length;i+=3){
+    if(isS){p[i]+=Math.cos(wa)*wind*dt*.5;p[i+1]-=dt*(.35+Math.random()*.4)*(G.weather==='blizzard'?2:1);p[i+2]+=Math.sin(wa)*wind*dt*.35;}
+    else p[i+1]-=dt*.2;
+    if(p[i+1]<0||Math.abs(p[i]-cx)>58||Math.abs(p[i+2]-cz)>58){
+      p[i]=cx+(Math.random()-.5)*100;p[i+1]=cy+22+Math.random()*5;p[i+2]=cz+(Math.random()-.5)*100;
+    }
+  }
+  G.three.snowPts.geometry.attributes.position.needsUpdate=true;
+  var b=G.three.blizzPts.geometry.attributes.position.array;
+  for(var i=0;i<b.length;i+=3){
+    b[i]+=Math.cos(wa)*wind*dt*2;b[i+1]-=dt*1.6*(Math.random()*.3+.8);b[i+2]+=Math.sin(wa)*wind*dt*1.1;
+    if(b[i+1]<0||Math.abs(b[i]-cx)>42||Math.abs(b[i+2]-cz)>42){
+      b[i]=cx+(Math.random()-.5)*65;b[i+1]=cy+16;b[i+2]=cz+(Math.random()-.5)*65;
+    }
+  }
+  G.three.blizzPts.geometry.attributes.position.needsUpdate=true;
+  G.holes.forEach(function(h){
+    var w=h.mesh.getObjectByName('water');
+    if(w) w.material.opacity=.38+Math.sin(Date.now()*.002+h.x)*.15;
+  });
+  if(G.three.fishBob&&G.fishing){
+    var bob=G.biteActive?.12:.05;
+    G.three.fishBob.position.y=bob+Math.sin(Date.now()*.004)*.011;
+    if(G.three.fishFloat) G.three.fishFloat.position.y=bob+.03+Math.sin(Date.now()*.004)*.01;
+  }
+}
+
+function tickWeather(dt){
+  G.wTimer+=dt;
+  if(G.wTimer>G.wDur){
+    G.wTimer=0; G.wDur=80+Math.random()*360; G.wDir=Math.random()*Math.PI*2;
+    var r=Math.random(), nw=r<.35?'clear':r<.55?'cloudy':r<.69?'overcast':r<.85?'snow':'blizzard';
+    if(nw!==G.weather) G.targetW=nw;
+  }
+  if(G.wTimer>20&&G.weather!==G.targetW) G.weather=G.targetW;
+}
+
+// ═══════════════════════════════
+// УПРАВЛЕНИЕ ИГРОКОМ
+// ═══════════════════════════════
+function initInput(){
+  document.addEventListener('keydown',function(e){
+    G.keys[e.code]=true;
+    if(e.code==='Escape'){
+      if(invOpen||asmOpen||shopOpen){closeAll();return;}
+      if(G.mode==='drill'){G.mode='walk';document.getElementById('drillui').style.display='none';return;}
+      if(G.mode==='fish'){stopFishing();return;}
+      if(document.getElementById('scr-pause').style.display==='flex'){resumeG();return;}
+      showPause(); return;
+    }
+    if(e.code==='KeyI'&&!shopOpen&&!asmOpen) invOpen?closeInv():openInv();
+    if(e.code==='KeyR'&&!invOpen&&!shopOpen) asmOpen?closeAsm():openAsm();
+    if(e.code==='KeyB') doDrill();
+    if(e.code==='KeyF') doFish();
+    if(e.code==='KeyT') doTent();
+    if(e.code==='KeyG'&&!invOpen&&!asmOpen) shopOpen?closeShop():openShop();
+    if(e.code==='Space'){e.preventDefault(); onSpace();}
+  });
+  document.addEventListener('keyup',function(e){G.keys[e.code]=false;});
+  var cv=document.getElementById('gc');
+  cv.addEventListener('click',function(){
+    if(G.mode==='walk'||G.mode==='fish'||G.mode==='drill') cv.requestPointerLock();
+  });
+  document.addEventListener('pointerlockchange',function(){G.locked=document.pointerLockElement===cv;});
+  document.addEventListener('mousemove',function(e){
+    if(!G.locked) return;
+    var s=(SETS.mouseSens/10)*.001;
+    G.yaw-=e.movementX*s; G.pitch=Math.max(-1.12,Math.min(1.12,G.pitch-e.movementY*s));
+  });
+}
+function onSpace(){
+  if(G.mode==='drill') advDrill();
+  if(G.mode==='fish'&&G.biteActive) hookSet();
+}
+function tickPlayer(dt){
+  if(!G.locked||G.mode!=='walk') return;
+  var spd=G.keys['ShiftLeft']||G.keys['ShiftRight']?CFG.RUN:CFG.WALK;
+  var fwd=new THREE.Vector3(-Math.sin(G.yaw),0,-Math.cos(G.yaw));
+  var right=new THREE.Vector3(Math.cos(G.yaw),0,-Math.sin(G.yaw));
+  var mv=new THREE.Vector3();
+  if(G.keys['KeyW']||G.keys['ArrowUp'])    mv.addScaledVector(fwd,1);
+  if(G.keys['KeyS']||G.keys['ArrowDown'])  mv.addScaledVector(fwd,-1);
+  if(G.keys['KeyA']||G.keys['ArrowLeft'])  mv.addScaledVector(right,-1);
+  if(G.keys['KeyD']||G.keys['ArrowRight']) mv.addScaledVector(right,1);
+  if(mv.length()>0){mv.normalize();G.pos.y=1.72+Math.sin(Date.now()*.011)*.008;}
+  else G.pos.y=lerp(G.pos.y,1.72,dt*8);
+  G.pos.addScaledVector(mv,spd*dt);
+  G.pos.x=Math.max(-265,Math.min(265,G.pos.x));
+  G.pos.z=Math.max(-265,Math.min(265,G.pos.z));
+  camera.position.copy(G.pos);
+  camera.rotation.order='YXZ'; camera.rotation.y=G.yaw; camera.rotation.x=G.pitch;
+  checkNear(); if(SETS.minimap) drawMinimap();
+}
+function checkNear(){
+  G.nearHole=null;
+  for(var i=0;i<G.holes.length;i++){
+    var h=G.holes[i];
+    if((G.pos.x-h.x)*(G.pos.x-h.x)+(G.pos.z-h.z)*(G.pos.z-h.z)<7.5){G.nearHole=h;break;}
+  }
+  var pr=document.getElementById('prompt');
+  if(G.nearHole&&G.mode==='walk'){
+    pr.style.display='block';
+    pr.innerHTML='<span class="pk">F</span> Рыбачить &nbsp;<span class="pk">B</span> Бурить рядом';
+  } else pr.style.display='none';
+}
+
+// ═══════════════════════════════
+// БУРЕНИЕ
+// ═══════════════════════════════
+function doDrill(){
+  if(G.mode==='fish'){stopFishing();return;}
+  if(G.mode!=='walk') return;
+  if(!G.equipped.drill) return;
+  G.mode='drill'; G.drillProg=0;
+  document.getElementById('drillui').style.display='block';
+  document.getElementById('dfill').style.width='0%';
+  document.getElementById('dlabel').textContent='Удерживайте [Пробел]';
+}
+function advDrill(){
+  if(G.mode!=='drill') return;
+  var drill=null;
+  ALL_ITEMS.tools.forEach(function(t){if(t.id===G.equipped.drill)drill=t;});
+  var sp=drill?drill.ds:22;
+  G.drillProg=Math.min(100,G.drillProg+sp*.072);
+  document.getElementById('dfill').style.width=G.drillProg+'%';
+  document.getElementById('dlabel').textContent='Бурение... '+Math.round(G.drillProg)+'%';
+  if(G.drillProg>=100) finishDrill();
+}
+function finishDrill(){
+  G.mode='walk'; G.drillProg=0;
+  document.getElementById('drillui').style.display='none';
+  var hx=G.pos.x+Math.sin(G.yaw)*(-2), hz=G.pos.z+Math.cos(G.yaw)*(-2);
+  for(var i=0;i<G.holes.length;i++){
+    if((G.holes[i].x-hx)*(G.holes[i].x-hx)+(G.holes[i].z-hz)*(G.holes[i].z-hz)<1.2) return;
+  }
+  var mesh=makeHole(hx,hz);
+  G.holes.push({x:hx,z:hz,mesh:mesh,hasFish:Math.random()>.1,used:0,maxUses:2+Math.floor(Math.random()*4),regenTimer:0});
+  G.holesDug++;
+  document.getElementById('sv-h').textContent=G.holes.length;
+  saveGame();
+}
+
+// ═══════════════════════════════
+// РЫБАЛКА
+// ═══════════════════════════════
+function doFish(){
+  if(G.mode==='fish'){stopFishing();return;}
+  if(G.mode!=='walk') return;
+  if(!G.assembled) return;
+  if(!G.nearHole) return;
+  G.mode='fish'; G.fishing=true; G.biteActive=false;
+  G.hookPos=0; G.hookDir=1; G.activeHole=G.nearHole;
+  G.biteTimer=biteDelay(); G.missTimer=0;
+  makeFishVis(G.nearHole.x,G.nearHole.z);
+  document.getElementById('fishui').style.display='block';
+  document.getElementById('bitewrap').style.display='none';
+  document.getElementById('fishstatus').textContent='Снасть опущена... Ожидание';
+  document.getElementById('btn-fish').classList.add('on');
+}
+function biteDelay(){
+  var base=5+Math.random()*10;
+  if(G.asm.bait) base*=.58;
+  if(G.asm.rod)  base*=(2-G.asm.rod.bm);
+  var wm={clear:1,cloudy:.88,overcast:.82,snow:.7,blizzard:1.32};
+  base*=wm[G.weather]||1;
+  var h=Math.floor(G.time/60);
+  if(h>=5&&h<=7) base*=.42;
+  if(h>=17&&h<=19) base*=.52;
+  if(h>=23||h<=4) base*=.62;
+  if(h>=10&&h<=14) base*=1.22;
+  return Math.max(2,base);
+}
+function tickFish(dt){
+  if(!G.fishing) return;
+  if(SETS.regen){
+    G.holes.forEach(function(h){
+      if(!h.hasFish){h.regenTimer+=dt;if(h.regenTimer>150){h.hasFish=true;h.used=0;h.regenTimer=0;}}
+    });
+  }
+  if(!G.biteActive){
+    G.biteTimer-=dt;
+    if(G.biteTimer<=0){
+      if(!G.activeHole||!G.activeHole.hasFish){
+        document.getElementById('fishstatus').textContent='Рыбы нет... Попробуйте другую лунку';
+        G.biteTimer=14+Math.random()*16; return;
+      }
+      triggerBite();
+    } else {
+      document.getElementById('fishstatus').textContent='Ожидание поклёвки...';
+    }
+  } else {
+    G.hookSpd=36+(G.asm.rod?G.asm.rod.bm*15:15);
+    G.hookPos+=G.hookDir*G.hookSpd*dt;
+    if(G.hookPos>=100){G.hookPos=100;G.hookDir=-1;}
+    if(G.hookPos<=0){G.hookPos=0;G.hookDir=1;}
+    document.getElementById('pmark').style.left=G.hookPos+'%';
+    document.getElementById('pfill').style.width=G.hookPos+'%';
+    G.missTimer-=dt;
+    if(G.missTimer<=0) autoMiss();
+  }
+}
+function triggerBite(){
+  G.biteActive=true;
+  G.missTimer=2+Math.random()*1.4;
+  G.hookPos=Math.random()*18; G.hookDir=1;
+  document.getElementById('bitewrap').style.display='block';
+  document.getElementById('fishstatus').textContent='КЛЮЁТ!';
+  document.getElementById('phint').textContent='Подсеки в зелёной зоне [Пробел]';
+  if(G.three.fishBob) G.three.fishBob.position.y=-.03;
+}
+function hookSet(){
+  if(!G.biteActive) return;
+  var diffs={easy:[15,85],normal:[25,75],hard:[38,62]};
+  var z=diffs[SETS.difficulty]||[25,75];
+  if(G.hookPos>=z[0]&&G.hookPos<=z[1]){
+    landFish();
+  } else {
+    G.biteActive=false;
+    document.getElementById('bitewrap').style.display='none';
+    document.getElementById('fishstatus').textContent='Промах. Ждём следующую...';
+    G.biteTimer=biteDelay()*1.12;
+    if(G.three.fishBob) G.three.fishBob.position.y=.05;
+  }
+}
+function autoMiss(){
+  G.biteActive=false;
+  document.getElementById('bitewrap').style.display='none';
+  document.getElementById('fishstatus').textContent='Сошла. Ждём следующую...';
+  G.biteTimer=biteDelay()*1.25;
+  if(G.three.fishBob) G.three.fishBob.position.y=.05;
+}
+function landFish(){
+  G.biteActive=false;
+  document.getElementById('bitewrap').style.display='none';
+  var fish=pickFish();
+  var wt=fish.min+Math.random()*(fish.max-fish.min);
+  var rodQ=G.asm.rod?G.asm.rod.bm:1;
+  wt=Math.min(fish.max,wt*rodQ);
+  var ws=wt>=1?wt.toFixed(2)+' кг':Math.round(wt*1000)+' г';
+  G.fishCaught++; G.totalWt+=wt;
+  G.activeHole.used++;
+  if(G.activeHole.used>=G.activeHole.maxUses) G.activeHole.hasFish=false;
+  var isRec=!G.recFish||wt>G.recFish.wt;
+  if(isRec) G.recFish={name:fish.name,wt:wt};
+  var earned=Math.round(fish.val*(wt/fish.min)*.35+fish.val);
+  G.money+=earned;
+  document.getElementById('money-val').textContent=G.money;
+  G.catchLog.unshift({name:fish.name,wt:ws});
+  document.getElementById('catchlog').innerHTML=G.catchLog.slice(0,10).map(function(c){
+    return '<div class="ci"><span>'+c.name+'</span><span>'+c.wt+'</span></div>';
+  }).join('');
+  document.getElementById('sv-f').textContent=G.fishCaught;
+  document.getElementById('sv-w').textContent=G.totalWt.toFixed(2)+' кг';
+  if(G.recFish){var rw=G.recFish.wt;document.getElementById('sv-r').textContent=G.recFish.name+' '+(rw>=1?rw.toFixed(2)+'кг':Math.round(rw*1000)+'г');}
+  document.getElementById('cpname').textContent=fish.name;
+  document.getElementById('cpwt').textContent=ws;
+  document.getElementById('cprec').style.display=isRec?'block':'none';
+  document.getElementById('cpmoney').textContent='+'+earned+' монет';
+  var pop=document.getElementById('catchpop');
+  pop.className='show'; setTimeout(function(){pop.className='hide';},2400);
+  G.biteTimer=biteDelay();
+  document.getElementById('fishstatus').textContent='Снасть опущена снова...';
+  if(G.three.fishBob) G.three.fishBob.position.y=.05;
+  saveGame();
+}
+function pickFish(){
+  var hookId=G.asm.hook?G.asm.hook.id:null, h=Math.floor(G.time/60);
+  var pool=FISH.map(function(f){
+    var eff=f.r;
+    if(hookId&&f.baits.indexOf(hookId)>=0) eff*=2.7;
+    if(f.nb&&(h>=22||h<=4)) eff*=f.nb;
+    return {id:f.id,name:f.name,min:f.min,max:f.max,val:f.val,baits:f.baits,eff:eff};
+  });
+  var total=pool.reduce(function(s,f){return s+f.eff;},0), r=Math.random()*total;
+  for(var i=0;i<pool.length;i++){r-=pool[i].eff;if(r<=0)return pool[i];}
+  return pool[0];
+}
+function stopFishing(){
+  G.fishing=false; G.biteActive=false; G.mode='walk';
+  document.getElementById('fishui').style.display='none';
+  document.getElementById('btn-fish').classList.remove('on');
+  ['fishLine','fishBob','fishFloat'].forEach(rmObj);
+}
+
+// ═══════════════════════════════
+// ПАЛАТКА
+// ═══════════════════════════════
+function doTent(){
+  if(G.mode==='fish') stopFishing();
+  if(G.mode!=='walk') return;
+  var tx=G.pos.x+Math.sin(G.yaw)*(-3.2), tz=G.pos.z+Math.cos(G.yaw)*(-3.2);
+  makeTent(tx,tz); G.tents.push({x:tx,z:tz});
+}
+
+// ═══════════════════════════════
+// ИНВЕНТАРЬ
+// ═══════════════════════════════
+var invOpen=false,asmOpen=false,shopOpen=false;
+function openInv(){
+  invOpen=true; document.exitPointerLock();
+  document.getElementById('invbg').style.display='block';
+  document.getElementById('invbox').style.display='block';
+  renderItab(G.curTab);
+}
+function closeInv(){
+  invOpen=false; if(!asmOpen) G.mode='walk';
+  document.getElementById('invbg').style.display='none';
+  document.getElementById('invbox').style.display='none';
+  G.pickSlot=null;
+}
+function switchItab(el,tab){
+  document.querySelectorAll('.itab').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on'); G.curTab=tab; renderItab(tab);
+}
+function renderItab(tab){
+  var grid=document.getElementById('igrid'); grid.innerHTML='';
+  if(tab==='equipped'){renderEquipped(grid);return;}
+  var cat={rods:'rods',jigs:'jigs',lures:'lures',baits:'baits',lines:'lines',tools:'tools'}[tab]||'rods';
+  var items=getOwned(cat);
+  if(G.pickSlot){
+    var allowed={rod:['rod'],line:['line'],hook:['hook'],bait:['bait'],float:['float']};
+    var types=allowed[G.pickSlot]||[];
+    if(G.pickSlot==='hook') items=[].concat(getOwned('jigs'),getOwned('lures'));
+    items=items.filter(function(i){return types.indexOf(i.type)>=0;});
+    if(!items.length){
+      grid.innerHTML='<div style="grid-column:1/-1;color:#475569;text-align:center;padding:20px">Нет подходящих предметов.<br><small style="color:#334155">Купите в магазине [G]</small></div>';
+      return;
+    }
+  }
+  if(!items.length){
+    grid.innerHTML='<div style="grid-column:1/-1;color:#475569;text-align:center;padding:20px">Пусто. Загляните в магазин [G]</div>';
+    return;
+  }
+  items.forEach(function(item){
+    var div=document.createElement('div'); div.className='icard';
+    if(Object.values(G.equipped).indexOf(item.id)>=0) div.classList.add('eqp');
+    if(Object.values(G.asm).some(function(s){return s&&s.id===item.id;})) div.classList.add('sel');
+    div.onclick=G.pickSlot?function(){assignSlot(item);}:function(){itemClick(item);};
+    div.innerHTML='<span class="ico">'+item.ico+'</span>'
+      +'<div class="inm">'+item.name+'</div>'
+      +'<div class="ids">'+item.desc+'</div>'
+      +(item.stat?'<div class="ist">'+item.stat+'</div>':'');
+    grid.appendChild(div);
+  });
+}
+function renderEquipped(grid){
+  [{key:'drill',lbl:'Ледобур'},{key:'rod',lbl:'Удочка'},{key:'line',lbl:'Леска'},
+   {key:'hook',lbl:'Мормышка/Блесна'},{key:'bait',lbl:'Наживка'},{key:'float',lbl:'Поплавок'}
+  ].forEach(function(s){
+    var div=document.createElement('div'); div.className='icard';
+    var all=getAllOwned();
+    var item=G.equipped[s.key]?all.filter(function(i){return i.id===G.equipped[s.key];})[0]:null;
+    if(item) div.classList.add('eqp');
+    div.innerHTML='<span class="ico" style="color:#'+(item?'86efac':'334155')+'">'+
+      (item?item.ico:'--')+'</span>'
+      +'<div class="inm" style="color:#'+(item?'e2e8f0':'334155')+'">'+(item?item.name:'Пусто')+'</div>'
+      +'<div class="ids">'+s.lbl+'</div>'
+      +(item&&item.stat?'<div class="ist">'+item.stat+'</div>':'');
+    if(item) div.onclick=function(){G.equipped[s.key]=null;renderEquipped(grid);};
+    grid.appendChild(div);
+  });
+}
+function itemClick(item){
+  if(item.type==='drill'){G.equipped.drill=item.id;renderItab(G.curTab);}
+}
+function assignSlot(item){
+  if(!G.pickSlot) return;
+  G.asm[G.pickSlot]=item; G.equipped[G.pickSlot]=item.id;
+  document.getElementById('ai-'+G.pickSlot).textContent=item.ico;
+  document.getElementById('av-'+G.pickSlot).textContent=item.name;
+  document.getElementById('as-'+G.pickSlot).classList.add('filled');
+  document.getElementById('as-'+G.pickSlot).classList.remove('picking');
+  G.pickSlot=null; closeInv(); updateAsmPrev(); checkAsmBtn();
+}
+
+// ═══════════════════════════════
+// СБОРКА (перетаскиваемая)
+// ═══════════════════════════════
+function openAsm(){
+  if(G.mode==='fish'||G.mode==='drill') return;
+  asmOpen=true; document.exitPointerLock();
+  document.getElementById('asmbg').style.display='block';
+  var box=document.getElementById('asmbox');
+  box.style.display='block';
+  if(!box._dragged){box.style.top='50%';box.style.left='50%';box.style.transform='translate(-50%,-50%)';}
+  updateAsmPrev(); checkAsmBtn();
+}
+function closeAsm(){
+  asmOpen=false; if(!invOpen) G.mode='walk';
+  document.getElementById('asmbg').style.display='none';
+  document.getElementById('asmbox').style.display='none';
+  G.pickSlot=null;
+  document.querySelectorAll('.aslot').forEach(function(s){s.classList.remove('picking');});
+}
+function pickSlot(slot){
+  G.pickSlot=slot;
+  document.querySelectorAll('.aslot').forEach(function(s){s.classList.remove('picking');});
+  document.getElementById('as-'+slot).classList.add('picking');
+  var tabMap={rod:'rods',line:'lines',hook:'jigs',bait:'baits',float:'floats'};
+  G.curTab=tabMap[slot]||'rods';
+  openInv();
+  var tabNames=['rods','jigs','lures','baits','lines','tools','equipped'];
+  var tabEls=document.querySelectorAll('.itab');
+  tabEls.forEach(function(t){t.classList.remove('on');});
+  var idx=tabNames.indexOf(G.curTab); if(idx>=0&&tabEls[idx]) tabEls[idx].classList.add('on');
+  renderItab(G.curTab);
+}
+function clrSlot(e,slot){
+  e.stopPropagation();
+  G.asm[slot]=null; G.equipped[slot]=null;
+  document.getElementById('ai-'+slot).textContent='--';
+  document.getElementById('av-'+slot).textContent='';
+  document.getElementById('as-'+slot).classList.remove('filled');
+  G.assembled=false; updateAsmPrev(); checkAsmBtn();
+}
+function updateAsmPrev(){
+  var s=G.asm, ps=document.getElementById('apstats');
+  if(!s.rod&&!s.line&&!s.hook){ps.innerHTML='<span style="color:#334155">Добавьте компоненты...</span>';return;}
+  var bite=100;
+  if(s.rod)  bite=Math.round(bite*(s.rod.bm||1));
+  if(s.line) bite=Math.round(bite*(s.line.bm||1));
+  if(s.hook) bite=Math.round(bite*(s.hook.bm||1));
+  if(s.bait) bite=Math.round(bite*(s.bait.bm||1));
+  ps.innerHTML='<span class="apst">Клёв: '+bite+'%</span>'
+    +(s.hook&&s.hook.stat?'<span class="apst"> | '+s.hook.stat+'</span>':'')
+    +(s.bait?'<span class="apst"> | '+s.bait.name+'</span>':'')
+    +(s.float?'<span class="apst"> | '+s.float.name+'</span>':'');
+}
+function checkAsmBtn(){
+  document.getElementById('asmbtn').disabled=!(G.asm.rod&&G.asm.line&&G.asm.hook);
+}
+function doAssemble(){
+  if(!G.asm.rod||!G.asm.line||!G.asm.hook) return;
+  G.assembled=true; closeAsm();
+}
+
+// Перетаскивание окна сборки
+window.addEventListener('load',function(){
+  var el=document.getElementById('asmbox');
+  var handle=document.getElementById('asm-handle');
+  var dragging=false,ox=0,oy=0;
+  handle.addEventListener('mousedown',function(e){
+    if(!el._dragged){
+      var r=el.getBoundingClientRect();
+      el.style.transform='none';
+      el.style.left=r.left+'px'; el.style.top=r.top+'px';
+      el._dragged=true;
+    }
+    dragging=true; ox=e.clientX-el.offsetLeft; oy=e.clientY-el.offsetTop;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove',function(e){
+    if(!dragging) return;
+    var nx=Math.max(0,Math.min(window.innerWidth-el.offsetWidth,e.clientX-ox));
+    var ny=Math.max(0,Math.min(window.innerHeight-el.offsetHeight,e.clientY-oy));
+    el.style.left=nx+'px'; el.style.top=ny+'px';
+  });
+  document.addEventListener('mouseup',function(){dragging=false;});
+});
+
+// ═══════════════════════════════
+// МАГАЗИН
+// ═══════════════════════════════
+var curShopTab='srods';
+function openShop(){
+  shopOpen=true; document.exitPointerLock();
+  document.getElementById('shopbg').style.display='block';
+  document.getElementById('shopbox').style.display='block';
+  renderShop(curShopTab);
+}
+function closeShop(){
+  shopOpen=false; G.mode='walk';
+  document.getElementById('shopbg').style.display='none';
+  document.getElementById('shopbox').style.display='none';
+}
+function switchShopTab(el,tab){
+  document.querySelectorAll('.shop-tab').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on'); curShopTab=tab; renderShop(tab);
+}
+function renderShop(tab){
+  document.getElementById('shop-bal').textContent=G.money;
+  var catMap={srods:'rods',sjigs:'jigs',slures:'lures',sbaits:'baits',slines:'lines',stools:'tools'};
+  var cat=catMap[tab]||'rods';
+  var items=ALL_ITEMS[cat]||[];
+  var grid=document.getElementById('sgrid'); grid.innerHTML='';
+  items.forEach(function(item){
+    var owned=!!G.owned[item.id];
+    var canBuy=!owned&&G.money>=item.price&&item.price>0;
+    var div=document.createElement('div');
+    div.className='scard'+(owned?' owned':'');
+    div.innerHTML='<span class="sico">'+item.ico+'</span>'
+      +'<div class="snm">'+item.name+'</div>'
+      +'<div class="sds">'+item.desc+'</div>'
+      +(item.stat?'<div class="sst">'+item.stat+'</div>':'')
+      +(item.price>0
+        ?'<div class="sprice">'+item.price+' монет</div>'
+        :'<div class="sprice" style="color:#86efac">Стартовый</div>')
+      +(owned
+        ?'<div class="sown">В наличии</div>'
+        :'<button class="sbuy"'+(canBuy?'':' disabled')
+         +' onclick="buyItem(\''+item.id+'\','+item.price+',\''+cat+'\')">'
+         +(G.money<item.price&&!owned?'Нужно '+item.price:'Купить')
+         +'</button>');
+    grid.appendChild(div);
+  });
+}
+function buyItem(id,price,cat){
+  if(G.money<price) return;
+  G.money-=price; G.owned[id]=true;
+  document.getElementById('money-val').textContent=G.money;
+  renderShop(curShopTab); saveGame();
+}
+
+// ═══════════════════════════════
+// МИНИКАРТА
+// ═══════════════════════════════
+function drawMinimap(){
+  var cv=document.getElementById('mmcanvas'),ctx=cv.getContext('2d');
+  var W=cv.width,H=cv.height,sc=W/200;
+  ctx.clearRect(0,0,W,H);
+  var bg=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W/2);
+  bg.addColorStop(0,'rgba(170,205,225,.9)'); bg.addColorStop(1,'rgba(110,158,195,.9)');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  G.holes.forEach(function(h){
+    var mx=(h.x+100)*sc, my=(h.z+100)*sc;
+    ctx.beginPath(); ctx.arc(mx,my,3,0,Math.PI*2);
+    ctx.fillStyle=h.hasFish?'rgba(56,189,248,.9)':'rgba(100,130,150,.6)'; ctx.fill();
+  });
+  G.tents.forEach(function(t){
+    var mx=(t.x+100)*sc, my=(t.z+100)*sc;
+    ctx.fillStyle='rgba(251,191,36,.85)'; ctx.fillRect(mx-3,my-3,6,6);
+  });
+  var px=(G.pos.x+100)*sc, py=(G.pos.z+100)*sc;
+  ctx.beginPath(); ctx.arc(px,py,4,0,Math.PI*2);
+  ctx.fillStyle='rgba(239,68,68,1)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(px,py,4,0,Math.PI*2);
+  ctx.strokeStyle='#fff'; ctx.lineWidth=1.4; ctx.stroke();
+  var ax=px+Math.sin(G.yaw)*7, ay=py+Math.cos(G.yaw)*(-7);
+  ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(ax,ay);
+  ctx.strokeStyle='rgba(239,68,68,.75)'; ctx.lineWidth=2; ctx.stroke();
+}
+
+function closeAll(){
+  if(invOpen) closeInv();
+  if(asmOpen) closeAsm();
+  if(shopOpen) closeShop();
+}
+
+// ═══════════════════════════════
+// СОХРАНЕНИЕ / ЗАГРУЗКА
+// ═══════════════════════════════
+function saveGame(){
+  var asmIds={};
+  for(var k in G.asm) asmIds[k]=G.asm[k]?G.asm[k].id:null;
+  var data={
+    v:2, time:G.time, fishCaught:G.fishCaught, totalWeight:G.totalWt,
+    holesDug:G.holesDug, catchLog:G.catchLog.slice(0,20), recFish:G.recFish,
+    money:G.money, owned:G.owned,
+    playerPos:{x:G.pos.x,z:G.pos.z},
+    equipped:G.equipped, assembled:G.assembled, asm:asmIds,
+    holes:G.holes.map(function(h){return{x:h.x,z:h.z,used:h.used,maxUses:h.maxUses};}),
+    tents:G.tents, weather:G.weather
+  };
+  localStorage.setItem('fl_save',JSON.stringify(data));
+}
+function loadGame(){
+  try{
+    var raw=localStorage.getItem('fl_save'); if(!raw) return;
+    var d=JSON.parse(raw); if(d.v!==2) return;
+    G.time=d.time||480; G.fishCaught=d.fishCaught||0; G.totalWt=d.totalWeight||0;
+    G.holesDug=d.holesDug||0; G.catchLog=d.catchLog||[]; G.recFish=d.recFish||null;
+    G.money=d.money||0; G.owned=d.owned||{};
+    G.weather=d.weather||'clear'; G.targetW=G.weather; G.assembled=d.assembled||false;
+    if(d.playerPos){G.pos.x=d.playerPos.x; G.pos.z=d.playerPos.z;}
+    G.equipped=Object.assign({rod:null,line:null,hook:null,bait:null,float:null,drill:null},d.equipped||{});
+    var all=getAllOwned();
+    if(d.asm){
+      for(var slot in d.asm){
+        var id=d.asm[slot];
+        var found=null; all.forEach(function(i){if(i.id===id)found=i;});
+        G.asm[slot]=found;
+        if(found){
+          var aiEl=document.getElementById('ai-'+slot); if(aiEl) aiEl.textContent=found.ico;
+          var avEl=document.getElementById('av-'+slot); if(avEl) avEl.textContent=found.name;
+          var asEl=document.getElementById('as-'+slot); if(asEl) asEl.classList.add('filled');
+        }
+      }
+    }
+    if(d.holes) d.holes.forEach(function(h){
+      var mesh=makeHole(h.x,h.z);
+      G.holes.push({x:h.x,z:h.z,mesh:mesh,hasFish:h.used<h.maxUses,
+        used:h.used,maxUses:h.maxUses,regenTimer:0});
+    });
+    if(d.tents) d.tents.forEach(function(t){makeTent(t.x,t.z);G.tents.push(t);});
+    document.getElementById('sv-f').textContent=G.fishCaught;
+    document.getElementById('sv-w').textContent=G.totalWt.toFixed(2)+' кг';
+    document.getElementById('sv-h').textContent=G.holes.length;
+    document.getElementById('money-val').textContent=G.money;
+    if(G.recFish){
+      var rw=G.recFish.wt;
+      document.getElementById('sv-r').textContent=G.recFish.name+' '+(rw>=1?rw.toFixed(2)+'кг':Math.round(rw*1000)+'г');
+    }
+    document.getElementById('catchlog').innerHTML=G.catchLog.slice(0,10).map(function(c){
+      return '<div class="ci"><span>'+c.name+'</span><span>'+c.wt+'</span></div>';
+    }).join('');
+    checkAsmBtn();
+  }catch(e){console.warn('Ошибка загрузки:',e);}
+}
+
+// ═══════════════════════════════
+// МЕНЮ
+// ═══════════════════════════════
+function checkSave(){
+  try{var d=JSON.parse(localStorage.getItem('fl_save'));return d&&d.v===2&&(d.fishCaught>0||d.holesDug>0);}
+  catch(e){return false;}
+}
+function showMenu(){
+  var m=document.getElementById('scr-menu');
+  m.style.display='flex'; m.style.opacity='1';
+  spawnMSnow();
+  if(checkSave()){
+    document.getElementById('btn-cont').style.display='flex';
+    document.getElementById('btn-reset').style.display='flex';
+    document.getElementById('m-stats').style.display='block';
+    try{
+      var d=JSON.parse(localStorage.getItem('fl_save'));
+      document.getElementById('ms-f').textContent=d.fishCaught||0;
+      var w=d.totalWeight||0;
+      document.getElementById('ms-w').textContent=w>=1?w.toFixed(1)+'кг':Math.round(w*1000)+'г';
+      document.getElementById('ms-m').textContent=d.money||0;
+    }catch(e){}
+  }
+}
+function spawnMSnow(){
+  var c=document.getElementById('menu-snow'); c.innerHTML='';
+  var chars=['*','+','.','x'];
+  for(var i=0;i<25;i++){
+    var f=document.createElement('div'); f.className='msf';
+    f.textContent=chars[Math.floor(Math.random()*chars.length)];
+    f.style.left=Math.random()*100+'%';
+    f.style.fontSize=(7+Math.random()*13)+'px';
+    f.style.animationDuration=(4+Math.random()*9)+'s';
+    f.style.animationDelay=(Math.random()*7)+'s';
+    c.appendChild(f);
+  }
+}
+function startNew(){ localStorage.removeItem('fl_save'); beginGame(); }
+function continueG(){ beginGame(); }
+function beginGame(){
+  var m=document.getElementById('scr-menu');
+  m.style.transition='opacity .6s'; m.style.opacity='0';
+  setTimeout(function(){ m.style.display='none'; runLoad(); }, 600);
+}
+function goMenu(){
+  saveGame(); gameOn=false; hidePause();
+  document.getElementById('hud').style.display='none';
+  document.getElementById('botbar').style.display='none';
+  document.getElementById('xhair').style.display='none';
+  document.getElementById('minimap').style.display='none';
+  document.exitPointerLock();
+  document.getElementById('btn-cont').style.display='flex';
+  document.getElementById('btn-reset').style.display='flex';
+  showMenu();
+}
+function doReset(){
+  if(!confirm('Сбросить весь прогресс?')) return;
+  localStorage.removeItem('fl_save'); location.reload();
+}
+function manSave(){ saveGame(); syncSUI(); }
+function showPause(){ document.getElementById('scr-pause').style.display='flex'; document.exitPointerLock(); }
+function hidePause(){ document.getElementById('scr-pause').style.display='none'; }
+function resumeG(){ hidePause(); document.getElementById('gc').requestPointerLock(); }
+
+// ═══════════════════════════════
+// ЗАГРУЗОЧНЫЙ ЭКРАН ПЕРЕД ИГРОЙ
+// ═══════════════════════════════
+var LSTEPS=['Генерация льда...','Расстановка деревьев...','Добавление сугробов...','Настройка освещения...','Загрузка предметов...','Применение настроек...','Готово!'];
+function runLoad(){
+  var sl=document.getElementById('scr-load');
+  sl.style.display='flex'; sl.style.opacity='1'; sl.style.transition='';
+  var step=0, fill=document.getElementById('lfill'), stepEl=document.getElementById('lstep');
+  fill.style.width='0%';
+  function next(){
+    if(step<LSTEPS.length){
+      stepEl.textContent=LSTEPS[step];
+      fill.style.width=Math.round((step+1)/LSTEPS.length*100)+'%';
+      step++;
+      setTimeout(next, 130+Math.random()*60);
+    } else {
+      setTimeout(function(){
+        sl.style.transition='opacity .6s'; sl.style.opacity='0';
+        setTimeout(function(){ sl.style.display='none'; startWorld(); }, 600);
+      }, 200);
+    }
+  }
+  setTimeout(next, 100);
+}
+
+// ═══════════════════════════════
+// ЗАПУСК ИГРОВОГО МИРА
+// ═══════════════════════════════
+var saveTimer=0;
+function startWorld(){
+  gameOn=true;
+  G.pos=new THREE.Vector3(0,1.72,0);
+  G.mode='walk';
+  G.holes=[]; G.tents=[]; G.catchLog=[];
+  G.asm={rod:null,line:null,hook:null,bait:null,float:null};
+  G.equipped={rod:null,line:null,hook:null,bait:null,float:null,drill:null};
+  G.assembled=false; G.fishCaught=0; G.totalWt=0;
+  G.recFish=null; G.holesDug=0; G.sess=0;
+  G.three={};
+
+  scene=new THREE.Scene();
+  clock=new THREE.Clock();
+  camera=new THREE.PerspectiveCamera(SETS.fov, window.innerWidth/window.innerHeight, .05, 1300);
+  camera.position.copy(G.pos);
+
+  var canvas=document.getElementById('gc');
+  renderer=new THREE.WebGLRenderer({canvas:canvas, antialias:true, powerPreference:'high-performance'});
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.shadowMap.enabled=SETS.shadows;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.1;
+
+  buildWorld();
+
+  window.addEventListener('resize',function(){
+    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+  });
+
+  // Загрузить или дать стартовые предметы
+  var raw=localStorage.getItem('fl_save');
+  var hasSave=false;
+  if(raw){try{var d=JSON.parse(raw);if(d.v===2&&Object.keys(d.owned||{}).length>0)hasSave=true;}catch(e){}}
+
+  if(hasSave){
+    loadGame();
+  } else {
+    G.money=0; G.owned={};
+    giveStarters();
+    G.equipped.drill='drill_h100';
+  }
+
+  initInput(); applyS();
+
+  document.getElementById('hud').style.display='block';
+  document.getElementById('botbar').style.display='flex';
+  document.getElementById('xhair').style.display='block';
+  if(SETS.minimap) document.getElementById('minimap').style.display='block';
+  document.getElementById('money-val').textContent=G.money;
+  document.getElementById('sv-f').textContent=G.fishCaught;
+  document.getElementById('sv-w').textContent='0 кг';
+  document.getElementById('sv-h').textContent=G.holes.length;
+
+  drawMinimap();
+  loop();
+}
+
+function loop(){
+  requestAnimationFrame(loop);
+  if(!gameOn||!renderer) return;
+  var dt=Math.min(clock.getDelta(),.05);
+  tickTime(dt); tickWeather(dt); tickPlayer(dt); tickFish(dt);
+  saveTimer+=dt;
+  if(saveTimer>30&&SETS.autosave){saveTimer=0;saveGame();}
+  renderer.render(scene,camera);
+}
+</script>
+</body>
+</html>
